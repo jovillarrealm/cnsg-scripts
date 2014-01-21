@@ -99,13 +99,13 @@ if [[ -f "$out_dir""$resource_file_name" ]]
 then 
     echo "Preexisting recs file, appending..."
 else 
-    echo "user_time;mrss;threads;number of comparisons" >> "$out_dir""$resource_file_name"
+    echo "user_time;mrss;threads;comparisons_number" >> "$out_dir""$resource_file_name"
 
 fi
 # Encuentra los archivos, asumiendo que el archivo se corre con pwd en GENOMIC y los guarda a un archivo
 data=$(find "." -name "GC*.fna" | tee "$tmp_dir""$find_file")
 
-elements=(1 10)
+elements=(1 10 100)
 permutations "${elements[@]}"
 
 cleanup
