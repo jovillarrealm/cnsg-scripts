@@ -50,7 +50,7 @@ Si son de shell entonces tratar de correr un script de shell o bash que se llame
 
 ---
 
-## maker_blast_db.sh
+## [maker_blast_db.sh](https://jovillarrealm.github.io/eDNA-empty/maker_blast_db.sh "downloadURL")
 
 - Crea bases de datos en subdirectorios de la carpeta "dbs" a partir de cada archivo .fasta encontrado en una carpeta que sea dada por el usuario
 
@@ -60,7 +60,7 @@ Si son de shell entonces tratar de correr un script de shell o bash que se llame
 
 ---
 
-## blastn_search.sh
+## [blastn_search.sh](https://jovillarrealm.github.io/eDNA-empty/blastn_search.sh "downloadURL")
 
 - Asume que los .fasta query están en un subdirectorio 'querys' y las bases de datos en 'dbs'
 
@@ -76,7 +76,7 @@ Si son de shell entonces tratar de correr un script de shell o bash que se llame
 
 ---
 
-## extract_target_seqs.py
+## [extract_target_seqs.py](https://jovillarrealm.github.io/eDNA-empty/extract_target_seqs.py "downloadURL")
 
 - Asume que hay un .txt en la carpeta donde están los tejidos que tiene las secuencias que van a ser extraidas
 
@@ -86,6 +86,6 @@ Si son de shell entonces tratar de correr un script de shell o bash que se llame
 
 ---
 
-## mafft_align.sh
+## [mafft_align.sh](https://jovillarrealm.github.io/eDNA-empty/mafft_align.sh "downloadURL")
 
 Alinea los archivos de la carpeta dada y deja los resultados en la carpeta "alineado"

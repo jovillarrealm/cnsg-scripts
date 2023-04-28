@@ -77,6 +77,7 @@ def read_out_files(cwd: str) -> list[tuple[str, tuple[str, list[list[str]]]]]:
 
 def write2xlsx(results, name: str):
     """Escribe los resultados a un xlsx con el nombre dado"""
+    
     from openpyxl.styles import Font
     if not results:
         print('sin resultados')
