@@ -1,4 +1,5 @@
 # %%
+
 from itertools import chain
 from typing import Iterator
 import os
@@ -13,15 +14,15 @@ here = os.getcwd()
 
 def is_out(file: str) -> bool:
     extension = os.path.splitext(file)[1]
-    if extension == '.out':
+    if extension == ".out":
         return True
     else:
         return False
 
 
 # %%
-def get_out_folders(cwd:str) -> list[tuple[str, list[str]]]:
-    """Busca en el directorio y los subdirectorios """
+def get_out_folders(cwd: str) -> list[tuple[str, list[str]]]:
+    """Busca en el directorio y los subdirectorios"""
     dirs: Iterator[tuple[str, list, list]] = os.walk(cwd)
     out_folders = []
     for folder in dirs:
@@ -31,25 +32,27 @@ def get_out_folders(cwd:str) -> list[tuple[str, list[str]]]:
             out_folders.append((folder_path, out_files))
     return out_folders
 
+
 # %%
 
 
 def read_out_file(file_path: str) -> list[list[str]]:
     """Extrae los resultados de un .out"""
     lines: list[list[str]] = []
-    with open(file_path, 'r') as out:
+    with open(file_path, "r") as out:
         for line in out.readlines():
             lines.append(line.split())
     return lines
+
 
 # %%
 
 
 def read_out_files(cwd: str) -> list[tuple[str, tuple[str, list[list[str]]]]]:
-    '''Lee la carpeta que script y toda subcarpeta en busca de archivos .out
+    """Lee la carpeta que script y toda subcarpeta en busca de archivos .out
 
     Solo se retornan las carpetas y archivos que no estén vacíos
-    here es desde se va a empezar a mirar'''
+    here es desde se va a empezar a mirar"""
     print("Trabajando desde...", cwd)
     folders = get_out_folders(cwd)
     out_lines: list[tuple] = []
@@ -72,56 +75,42 @@ def read_out_files(cwd: str) -> list[tuple[str, tuple[str, list[list[str]]]]]:
 
 
 # %%
+
 # def write2xlsx(results:list[tuple[str,tuple[str, list[list[str]]]]], name: str):
 
 
 def write2xlsx(results, name: str):
     """Escribe los resultados a un xlsx con el nombre dado"""
     if not results:
-        print('sin resultados')
+        print("sin resultados")
         return
-    #import xlsxwriter
-    from openpyxl.styles import Font
-    import openpyxl as xl
-    wb = xl.Workbook()
-    ws = wb.active
-    ws.title = "Resultados"
-    y: int = 1
+    import xlsxwriter
+
+    # Create an new Excel file and add a worksheet.
+    workbook = xlsxwriter.Workbook(name + ".xlsx", {'constant_memory':True})
+    worksheet = workbook.add_worksheet("Resultados")
+
+    # Add a bold format to use to highlight cells.
+    bold = workbook.add_format({"bold": True})
+
+    row, col= 0,0
     for folder in results:
-        cell = 'A' + str(y)
-        folder_name = folder[0]
-        write_header(folder_name, ws, y)
+        worksheet.write_row(row, col, 
+            [folder[0], "", "Per. Ident",	"Longitud",	"Mismatch",
+            "Gap Open",	"Q Start",	"Q end",	"Start",	"S end",	"E-Value",	"Bitscore"],
+            bold
+        )
         files = folder[1]
+        row+=1
         for file in files:
-            y += 2
-            cell: str = 'A' + str(y)
-            file_name = file[0]
-
-            ws[cell] = file_name
-            ws[cell].font = Font(name='Calibri', bold=True)
             lines = file[1]
-            for line in lines:
-                y += 1
-                x = ord('A')
-                for item in line:
-                    cell = chr(x) + str(y)
-                    x += 1
-                    ws[cell] = item
-        y += 5
-    wb.save(name+'.xlsx')
+            for file_row in lines:
+                worksheet.write_row(row,col,file_row)
+                row +=1
+            #row+=1
+        row +=5
 
-
-def write_header(folder_name, worksheet, y):
-    """Pone los headers bonitos como Julian"""
-    from openpyxl.styles import Font
-    headers = [folder_name, "", "Per. Ident",	"Longitud",	"Mismatch",
-               "Gap Open",	"Q Start",	"Q end",	"Start",	"S end",	"E-Value",	"Bitscore"]
-    x = ord('A')
-    for item in headers:
-        cell = chr(x) + str(y)
-        worksheet[cell] = item
-        worksheet[cell].font = Font(name='Calibri', bold=True)
-        x += 1
+    
 
 
 # %%
@@ -131,11 +120,11 @@ def main():
     dirs = read_out_files(here)
     f = perf_counter()
 
-    print("Tiempo en leer los archivos: ", f-i)
+    print("Tiempo en leer los archivos: ", f - i)
     i = perf_counter()
     write2xlsx(dirs, "Resultados_blastn")
     f = perf_counter()
-    print("Tiempo en escribir los archivos: ", f-i)
+    print("Tiempo en escribir los archivos: ", f - i)
 
 
 if "__main__" == __name__:
