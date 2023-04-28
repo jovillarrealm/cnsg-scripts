@@ -70,7 +70,7 @@ Si son de shell entonces tratar de correr un script de shell o bash que se llame
 
 ---
 
-## [resultados_blastn_search.py](https://jovillarrealm.github.io/eDNA-empty/resultados_blastn_search.py "download")
+## [resultados_blastn_search.py](https://jovillarrealm.github.io/eDNA-empty/resultados_blastn_search.py "downloadURL")
 
 - Recopila resultados de los .out que encuentre (en todo subdirectorio) en un .xlsx
 
