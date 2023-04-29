@@ -1,12 +1,16 @@
 # %%
 
-from typing import Iterator
+from typing import Iterable, Iterator
 import os
 from pathlib import Path
 from time import perf_counter
+import xlsxwriter
 
 # %%
 here = os.getcwd()
+File_lines = Iterable[tuple[str]]
+Files = Iterable[tuple[str, File_lines]]
+Folders = list[tuple[str, Files]]
 
 # %%
 
@@ -20,72 +24,55 @@ def is_out(file: str) -> bool:
 
 
 # %%
-def get_out_folders(cwd: str) -> list[tuple[str, list[str]]]:
+def get_out_folders(cwd: str):
     """Busca en el directorio y los subdirectorios"""
     dirs: Iterator[tuple[str, list, list]] = os.walk(cwd)
-    out_folders = []
-    for folder in dirs:
-        folder_path, sub_dirs, files = folder
+
+    for folder_path, sub_dirs, files in dirs:
         out_files = list(filter(is_out, files))
         if out_files:
-            out_folders.append((folder_path, out_files))
-    return out_folders
+            yield folder_path, out_files
 
 
 # %%
 
 
-def read_out_file(file_path: str) -> list[list[str]]:
+def read_out_file(file_path: str) -> File_lines:
     """Extrae los resultados de un .out"""
-    lines: list[list[str]] = []
-    with open(file_path, "r") as out:
-        for line in out.readlines():
-            lines.append(line.split())
-    return lines
-
-
-# %%
-
-
-def read_out_files(cwd: str) -> list[tuple[str, tuple[str, list[list[str]]]]]:
-    """Lee la carpeta que script y toda subcarpeta en busca de archivos .out
-
-    Solo se retornan las carpetas y archivos que no estén vacíos
-    here es desde se va a empezar a mirar"""
-    print("Trabajando desde...", cwd)
-    folders = get_out_folders(cwd)
-    out_lines: list[tuple] = []
-    for folder in folders:
-        path, files = Path(folder[0]), folder[1]
-        db = path.parts[-1].upper()
-
-        folder_results = []
-        for file in files:
-            file_lines: list[list[str]] = []
-            for line in read_out_file(os.path.join(path, file)):
-                file_lines.append(line)
-            if file_lines:
-                file_results: tuple[str, list] = (file, file_lines)
-                folder_results.append(file_results)
-
-        if folder_results:
-            out_lines.append((db, folder_results))
+    with open(file_path, "r") as file:
+        out_lines: File_lines = [tuple(line.split())
+                                 for line in file.readlines()]
+        # tuple or list?????
     return out_lines
 
 
 # %%
 
-File_Data = list[list[str]]
-Files = tuple[str, File_Data]
-Folders = list[tuple[str, Files]]
+
+def read_out_files(cwd: str) -> Folders:
+    """Lee la carpeta que script y toda subcarpeta en busca de archivos .out
+
+    Solo se retornan las carpetas y archivos que no estén vacíos
+    """
+    print("Trabajando desde...", cwd)
+    folders = get_out_folders(cwd)
+    out_files = []
+    for folder_path, files in folders:
+
+        data = [(file, read_out_file(os.path.join(folder_path, file)))
+                for file in files]
+        out_files.append((Path(folder_path).parts[-1].upper(), data))
+    return out_files
+
+
+# %%
 
 
 def write2xlsx(results: Folders, name: str) -> int:
     """Escribe los resultados a un xlsx con el nombre dado"""
     if not results:
         print("sin resultados")
-        return
-    import xlsxwriter
+        return 0
 
     # Create an new Excel file and add a worksheet.
     workbook = xlsxwriter.Workbook(name + ".xlsx", {"constant_memory": True})
@@ -124,6 +111,7 @@ def write2xlsx(results: Folders, name: str) -> int:
                 row += 1
             # row+=1
         row += 5
+    workbook.close()
     return row
 
 
@@ -134,11 +122,11 @@ def main():
     dirs = read_out_files(here)
     f = perf_counter()
 
-    print(f"Tiempo en leer los {len(dirs)} archivo(s): ", f - i)
+    print("Tiempo en leer los archivo(s): ", f - i)
     i = perf_counter()
     rows = write2xlsx(dirs, "Resultados_blastn")
     f = perf_counter()
-    print(f"Tiempo en escribir los archivos en {rows or 0} líneas: ", f - i)
+    print(f"Tiempo en escribir los archivos en {rows} líneas: ", f - i)
 
 
 if "__main__" == __name__:
