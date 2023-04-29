@@ -1,6 +1,5 @@
 # %%
 
-from itertools import chain
 from typing import Iterator
 import os
 from pathlib import Path
@@ -76,10 +75,12 @@ def read_out_files(cwd: str) -> list[tuple[str, tuple[str, list[list[str]]]]]:
 
 # %%
 
-# def write2xlsx(results:list[tuple[str,tuple[str, list[list[str]]]]], name: str):
+File_Data = list[list[str]]
+Files = tuple[str, File_Data]
+Folders = list[tuple[str, Files]]
 
 
-def write2xlsx(results, name: str):
+def write2xlsx(results: Folders, name: str) -> int:
     """Escribe los resultados a un xlsx con el nombre dado"""
     if not results:
         print("sin resultados")
@@ -87,30 +88,43 @@ def write2xlsx(results, name: str):
     import xlsxwriter
 
     # Create an new Excel file and add a worksheet.
-    workbook = xlsxwriter.Workbook(name + ".xlsx", {'constant_memory':True})
+    workbook = xlsxwriter.Workbook(name + ".xlsx", {"constant_memory": True})
     worksheet = workbook.add_worksheet("Resultados")
 
     # Add a bold format to use to highlight cells.
     bold = workbook.add_format({"bold": True})
 
-    row, col= 0,0
+    row, col = 0, 0
     for folder in results:
-        worksheet.write_row(row, col, 
-            [folder[0], "", "Per. Ident",	"Longitud",	"Mismatch",
-            "Gap Open",	"Q Start",	"Q end",	"Start",	"S end",	"E-Value",	"Bitscore"],
-            bold
+        worksheet.write_row(
+            row,
+            col,
+            [
+                folder[0],
+                "",
+                "Per. Ident",
+                "Longitud",
+                "Mismatch",
+                "Gap Open",
+                "Q Start",
+                "Q end",
+                "Start",
+                "S end",
+                "E-Value",
+                "Bitscore",
+            ],
+            bold,
         )
         files = folder[1]
-        row+=1
+        row += 1
         for file in files:
             lines = file[1]
             for file_row in lines:
-                worksheet.write_row(row,col,file_row)
-                row +=1
-            #row+=1
-        row +=5
-
-    
+                worksheet.write_row(row, col, file_row)
+                row += 1
+            # row+=1
+        row += 5
+    return row
 
 
 # %%
@@ -120,11 +134,11 @@ def main():
     dirs = read_out_files(here)
     f = perf_counter()
 
-    print("Tiempo en leer los archivos: ", f - i)
+    print(f"Tiempo en leer los {len(dirs)} archivo(s): ", f - i)
     i = perf_counter()
-    write2xlsx(dirs, "Resultados_blastn")
+    rows = write2xlsx(dirs, "Resultados_blastn")
     f = perf_counter()
-    print("Tiempo en escribir los archivos: ", f - i)
+    print(f"Tiempo en escribir los archivos en {rows or 0} líneas: ", f - i)
 
 
 if "__main__" == __name__:
