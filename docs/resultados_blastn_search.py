@@ -40,8 +40,7 @@ def get_out_folders(cwd: str):
 def read_out_file(file_path: str) -> File_lines:
     """Extrae los resultados de un .out"""
     with open(file_path, "r") as file:
-        out_lines: File_lines = [tuple(line.split())
-                                 for line in file.readlines()]
+        out_lines: File_lines = [tuple(line.split()) for line in file.readlines()]
         # tuple or list?????
     return out_lines
 
@@ -58,9 +57,9 @@ def read_out_files(cwd: str) -> Folders:
     folders = get_out_folders(cwd)
     out_files = []
     for folder_path, files in folders:
-
-        data = [(file, read_out_file(os.path.join(folder_path, file)))
-                for file in files]
+        data = [
+            (file, read_out_file(os.path.join(folder_path, file))) for file in files
+        ]
         out_files.append((Path(folder_path).parts[-1].upper(), data))
     return out_files
 
