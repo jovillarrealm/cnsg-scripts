@@ -50,7 +50,7 @@ while getopts "h:d:o:t:" opt; do
             delete_tmp=true
         ;;
         o)
-            out_dir="${OPTARG}"
+            out_dir=$(realpath "${OPTARG}")"/"
         ;;
         t)
             threads="${OPTARG}"
@@ -72,18 +72,16 @@ function permutations() {
         for (( j=i; j<n; j++ )); do
             echo "${elements[i]}" "${elements[j]}"
             output_name="test${elements[i]}x${elements[j]}.tsv"
-            query_data=$(head -n "${elements[i]}" "$tmp_dir""$find_file" | tee "$tmp_dir"ql"${elements[i]}".txt)
-            reference_data=$(tail -n "${elements[j]}" "$tmp_dir""$find_file" | tee "$tmp_dir"rl"${elements[j]}".txt)
+            head -n "${elements[i]}" "$tmp_dir""$find_file" | tee "$tmp_dir"ql"${elements[i]}".txt
+            tail -n "${elements[j]}" "$tmp_dir""$find_file" | tee "$tmp_dir"rl"${elements[j]}".txt
             #echo "$query_data"
             #echo XXXXXXXXXXX
             #echo "$reference_data"
             out_file="$out_dir"time"${elements[i]}"x"${elements[j]}".txt
-            if [[ $( bash --version ) =~ 5.2.21 ]]
-            then
-                /usr/bin/time -v fastani --ql "$tmp_dir"ql"${elements[i]}".txt --rl "$tmp_dir"rl"${elements[j]}".txt -t "$threads" -o "$out_dir""$output_name" 2> "$out_file"
-            else
-                /usr/bin/time -v fastANI --ql "$tmp_dir"ql"${elements[i]}".txt --rl "$tmp_dir"rl"${elements[j]}".txt -t "$threads" -o "$out_dir""$output_name" 2> "$out_file"
-            fi
+            ## fastANI a veces se llama fastANI cuando se compila o descarga, pero fastani en conda :/
+            # Esto maneja esos casos
+            /usr/bin/time -v fastani --ql "$tmp_dir"ql"${elements[i]}".txt --rl "$tmp_dir"rl"${elements[j]}".txt -t "$threads" -o "$out_dir""$output_name" 2> "$out_file" 1> /dev/null ||
+            /usr/bin/time -v fastANI --ql "$tmp_dir"ql"${elements[i]}".txt --rl "$tmp_dir"rl"${elements[j]}".txt -t "$threads" -o "$out_dir""$output_name" 2> "$out_file" 1> /dev/null
             extraer_time
         done
     done
@@ -103,9 +101,9 @@ else
 
 fi
 # Encuentra los archivos, asumiendo que el archivo se corre con pwd en GENOMIC y los guarda a un archivo
-data=$(find "." -name "GC*.fna" | tee "$tmp_dir""$find_file")
+find "." -name "GC*.fna" | tee "$tmp_dir""$find_file"
 
-elements=(1 10 100 1000)
+elements=(1 10)
 permutations "${elements[@]}"
 
 cleanup
