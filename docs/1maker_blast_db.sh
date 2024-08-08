@@ -1,15 +1,29 @@
-#!/bin/sh
-echo "Crea bases de datos de nucleotidos 'nucl' para blastn"
-echo "A partir de los fasta que inicien con lo que les diga el usuario, hacen bases de datos con el nombre que diga el usuario"
-echo "Va a leer solo los archivos .fasta en esta carpeta"
-echo "Donde están los tejidos? (nombre de subcarpeta)"
-read -r inicio 
-for DB in "$inicio"*/*.fasta
-do
-    echo "Para $DB"
-    echo "Nombre de la base de datos (nombre sin extensiones y .fasta ): "
-    read -r db_name
-    db_path="dbs/$db_name/$db_name"
-    makeblastdb -in "$DB" -dbtype nucl -out "$db_path" #nucl porque es una base de datos de nucleotidos
-    echo "$db_name hecho"
-done
+#!/bin/bash
+
+# Descripción clara del script
+echo "Crea bases de datos de nucleótidos o proteínas para BLAST a partir de archivos FASTA en una subcarpeta especificada."
+echo "Las bases de datos se crean en un directorio 'dbs'."
+
+# Solicitar al usuario el directorio de los archivos FASTA
+echo "Ingrese el nombre de la subcarpeta que contiene los archivos FASTA:"
+#read -r inicio
+inicio="predb"
+# Solicitar el tipo de base de datos
+#echo "El tipo de base de datos es de nucleótidos (y) o proteínas (n)? "
+#read -r npdbtype
+npdbtype="nucl"
+npdbtype=${npdbtype,,}  # Convertir a minúsculas para evitar problemas de mayúsculas/minúsculas
+
+dbdir="dbs"
+# Crear el directorio 'dbs' si no existe
+if [ ! -d dbs ]; then
+  mkdir $dbdir
+fi
+
+find . -wholename "./$inicio/*.fasta" -type f  
+
+# Buscar archivos FASTA en el directorio especificado y crear bases de datos
+find . -wholename "./$inicio/*.fasta" -type f  | \
+  xargs -pI {} parallel -j 8 "makeblastdb -in "{}" -dbtype $npdbtype -out "$dbdir/$( basename {} )""
+
+
