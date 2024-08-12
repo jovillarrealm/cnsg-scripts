@@ -1,2 +1,1 @@
-wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
-
+wget https://github.com/dnbaker/dashing2-binaries/raw/main/linux/v2.1.19/dashing2_savx.xz
