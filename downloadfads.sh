@@ -1,1 +1,2 @@
-wget https://github.com/dnbaker/dashing2-binaries/raw/main/linux/v2.1.19/dashing2_savx.xz
+wget https://ftp.ncbi.nlm.nih.gov/refseq/release/release-catalog/RefSeq-release225.catalog.gz
+
