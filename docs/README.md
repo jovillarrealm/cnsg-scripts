@@ -13,3 +13,4 @@ Y en ubuntu modificar el PATH con el directorio del /bin al modificar el .bashrc
 
 Si aparece el error tipo:
     blastn: error while loading shared libraries: libgomp.so.1: cannot open shared object file: No such file or directory
+    
