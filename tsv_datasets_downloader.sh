@@ -28,6 +28,15 @@ tmp_dir="$output_dir/tmp"
 genomic_dir="$output_dir/GENOMIC"
 mkdir -p "$tmp_dir" "$genomic_dir" || { echo "Error creating directories"; exit 1; }
 
+cleanup() {
+  if [ -d "$tmp_dir" ]; then
+    if [ -z "$(ls -A "$tmp_dir")" ]; then
+      rm -r "$tmp_dir" || { echo "Error removing temporary directory: $tmp_dir"; exit 1; }
+    else
+      echo "Temporary directory not empty, skipping deletion"
+    fi
+  fi
+}
 
 process_filename() {
     awk 'BEGIN { FS="\t"; OFS="\t" } {
@@ -120,14 +129,14 @@ download_and_unzip() {
 
 # Convención:
 # accession_genero-especie_infraespecific-name.zip
-#head -n +40 |
-#less
-#exit 0
 
 tail -n +2 "$input_file" |
+head -n +40 |
 process_filename |
 remove_redundant_GCA |
 remove_column_4|
+less
+exit 0
 while read -r accession accession_name filename ; do
     # Start download in the background
     
@@ -142,5 +151,4 @@ done
 # Wait for all background jobs to finish
 wait
 
-
-#rm -r $tmp_dir
+cleanup 
