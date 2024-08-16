@@ -129,6 +129,9 @@ download_and_unzip() {
 
 # Convención:
 # accession_genero-especie_infraespecific-name.zip
+#grep "GCA_"|
+#wc -l
+#exit 0
 
 tail -n +2 "$input_file" |
 head -n +40 |
