@@ -47,6 +47,7 @@ process_filename() {
     split(var1, nodb, "_")
     var4 = nodb[2]
     # Take only first 2 words in Organism Name y eso equivale a genero y especie? and replace spaces with '-'
+    gsub(/[^a-zA-Z0-9 ]/, "", $3)
     split($3, words, " ")
     var2 = words[1] "-" words[2]
     # Remove non-alphanumeric characters from $5 and replace spaces with '-'
