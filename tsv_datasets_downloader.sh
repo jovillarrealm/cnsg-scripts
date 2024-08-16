@@ -133,9 +133,9 @@ download_and_unzip() {
 #wc -l
 #less
 #exit 0
+#head -n +40 |
 
 tail -n +2 "$input_file" |
-head -n +40 |
 process_filename |
 remove_redundant_GCA |
 remove_column_4|
