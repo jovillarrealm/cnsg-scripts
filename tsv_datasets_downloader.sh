@@ -131,6 +131,7 @@ download_and_unzip() {
 # accession_genero-especie_infraespecific-name.zip
 #grep "GCA_"|
 #wc -l
+#less
 #exit 0
 
 tail -n +2 "$input_file" |
@@ -138,8 +139,6 @@ head -n +40 |
 process_filename |
 remove_redundant_GCA |
 remove_column_4|
-less
-exit 0
 while read -r accession accession_name filename ; do
     # Start download in the background
     
