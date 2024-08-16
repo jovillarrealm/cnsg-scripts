@@ -124,7 +124,7 @@ download_and_unzip() {
     extracted=$(find "$searchpath" -name "*" -type f)
     extension="${extracted##*.}"
     mmv -d -o  "$filepath/$archive_file/"* "$genomic_dir/$filename.$extension" # || { echo "Error moving files"; exit 1; }
-    #echo "Descargado en""$genomic_dir""/""$filename"".""$extension"""
+    echo "Descargado en""$genomic_dir""/""$filename"".""$extension"""
     #rm -r $filepath
 }
 
