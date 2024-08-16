@@ -122,8 +122,8 @@ download_and_unzip() {
     unzip -oq "$complete_zip_path" "$archive_file""/GC*_genomic.fna" -d "$filepath"
     extracted=$(find "$searchpath" -name "*" -type f)
     extension="${extracted##*.}"
-    mmv -d -o  "$filepath/$archive_file/"* "$genomic_dir/$filename.$extension" || { echo "Error moving files"; exit 1; }
-    echo "Descargado en""$genomic_dir""/""$filename"".""$extension"""
+    mmv -d -o  "$filepath/$archive_file/"* "$genomic_dir/$filename.$extension" # || { echo "Error moving files"; exit 1; }
+    #echo "Descargado en""$genomic_dir""/""$filename"".""$extension"""
     #rm -r $filepath
 }
 
