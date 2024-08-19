@@ -2,35 +2,27 @@
 
 print_help() {
     echo ""
-    echo "Uso: $0 [-i tsv/input/file/path] [-o path/for/dir/GENOMIC] [-a path/to/api/key/file] [-d FIXME solo funciona con argumento de basura]"
+    echo "Usage: $0 -i tsv/input/file/path -o path/for/dir/GENOMIC [-a path/to/api/key/file]"
     echo ""
-    echo "Este programa asume que el 'datasets' de la ncbi está instalado y se llama con 'datasets'"
-    echo "Este programa usa unzip, mmv, awk"
-    echo "Primera área de mejora, pasar flags de acá a datasets"
-    echo "De momento solo se maneja --api-key indirectamente"
+    echo ""
+    echo ""
+    echo "This script assumes 'datasets' and 'dataformat' are in PATH"
+    echo "It uses unzip, awk, xargs, datasets, dataformat"
+    echo ""
+    echo "Falta reportes de errores para añadir robustez y prevenir mal uso"
+    echo "Elegir y confirmar columnas de a leer por tsv"
+    echo ""
     echo ""
     
 }
 
 if [[ $# -lt 2 ]]; then
-  print_help
-  exit 1
+    print_help
+    exit 1
 fi
 
-
-cleanup() {
-
-    if $delete_tmp; then
-        echo "Borrando temporales"
-        rm -r "$tmp_dir"
-        # do dangerous stuff
-    else 
-        echo "No se borran archivos temporales"
-    fi
-}
-
 process_filename() {
-    awk 'BEGIN { FS="\t"; OFS="\t" } {
+    awk -v c1="1" -v c2="2" -v c3="3" 'BEGIN { FS="\t"; OFS="\t" } {
     # Remove version number of Assembly Accession, or $1
     split($1, arr, ".")
     var1 = arr[1]
@@ -42,27 +34,27 @@ process_filename() {
     split($3, words, " ")
     var2 = words[1] "-" words[2]
     # Remove non-alphanumeric characters from $5 and replace spaces with '-'
-    gsub(/ /, "-", $5)
-    gsub(/[^a-zA-Z0-9\-]/, "", $5)
-    # Remove consecutive "-" in $5
-    gsub(/-+/, "-", $5)
-    var3 = $5
+    gsub(/ /, "-", $6)
+    gsub(/[^a-zA-Z0-9\-]/, "", $6)
+    # Remove consecutive "-" in $6
+    gsub(/-+/, "-", $6)
+    var3 = $6
     # Output to the following variables: accession accession_name filename
     print $1,var1, var1"_"var2"_"var3, var4
     }'
 }
 
-remove_redundant_GCA() {
-    awk 'BEGIN { FS="\t"; OFS="\t" }
+keep_GCX() {
+    awk -v code="$prefix" 'BEGIN { FS="\t"; OFS="\t" }
 {
     # Store the relevant fields
     key = $4
-    value = $0
+    value = $1 OFS $2 OFS $3
 
     # Check if the key already exists in the array
     if (key in data) {
-        # If it exists and the current line starts with "GCF_", overwrite the other
-        if ($1 ~ /^GCF_/) {
+        # If it exists and the current line starts with "code_", overwrite the other
+        if ($1 ~ "^" code "_") {
             data[key] = value
         }
     } else {
@@ -79,107 +71,122 @@ END {
     }'
 }
 
-remove_column_4() {
-    awk 'BEGIN { FS="\t"; OFS=" " } {
-    print $1, $2, $3 
-    }'
-}
 
 
 download_and_unzip() {
     # Shadowing redundante sobre todo para saber mas o menos cual es el input de esta función
+    # Tambien puede que la concurrenca joda esta asignacones pero no tengo la paciencia de averiguarlo.
+    # Entonces este estado qued encapsulado dentro de la función
+    # Esto pone restricciones porque esto implica que esta función no puede llamar más funciones sin
     local accession=$accession
     local accession_name=$accession_name
     local filename=$filename
-    # Cosas que no mutna como api_key si pueden quedar por fuera pues
-    local filepath="$tmp_dir""$accession_name"
+    local filepath="$tmp_dir""$accession_name""/"
     local complete_zip_path="$filepath""$accession_name.zip"
-    # Descarga de archivos
     local downloaded_path="$genomic_dir""$filename.fna"
+    # Descarga de archivos
     if [ -f "$downloaded_path" ]; then
         echo "Ya estaba descargado en $downloaded_path"
+        return
     else
         
         # Create directory for downloaded files
-        mkdir -p "$filepath" || { echo "Error creating directory: $filepath"; exit 1; }
+        mkdir -p "$filepath" || {
+            echo "Error creating directory: $filepath"
+            exit 1
+        }
         
         # Download genome using 'datasets' (assuming proper installation)
         if [ "$num_process" -eq 3 ]; then
-            datasets download genome accession "$accession" --filename "$complete_zip_path" --no-progressbar # || { echo "Error downloading genome: $accession"; exit 1; }
+            if ! datasets download genome accession "$accession" --filename "$complete_zip_path" --no-progressbar; then # || { echo "Error downloading genome: $accession"; exit 1; }
+                echo "**** FAILED TO DOWNLOAD $accession , en  $complete_zip_path"
+                return 1
+            fi
         else
-            datasets download genome accession "$accession" --filename "$complete_zip_path" --api-key "$api_key" --no-progressbar # || { echo "Error downloading genome: $accession"; exit 1; }
+            if ! datasets download genome accession "$accession" --filename "$complete_zip_path" --api-key "$api_key" --no-progressbar; then # || { echo "Error downloading genome: $accession"; exit 1; }
+                echo "**** ERROR TO DOWNLOAD $accession , en  $complete_zip_path"
+                return 1
+            fi
         fi
         
         # Unzip genome
         archive_file="ncbi_dataset/data/$accession"
-        searchpath="$filepath/$archive_file"
+        searchpath="$filepath""$archive_file"
         unzip -oq "$complete_zip_path" "$archive_file""/GC*_genomic.fna" -d "$filepath"
+        
+        # Move to desired location
         extracted=$(find "$searchpath" -name "*" -type f)
         extension="${extracted##*.}"
-        mmv -d -o  "$filepath/$archive_file/"* "$genomic_dir/$filename.$extension" # || { echo "Error moving files"; exit 1; }
-        echo "Descargado en""$downloaded_path"
+        if ! find "$filepath""$archive_file" -type f -print0 | xargs -0 -I {} mv -n {} "$genomic_dir""$filename.$extension"; then
+            echo "**** ERROR TO MOVE contents of : " "$filepath""$archive_file/" "  in  " "$genomic_dir""$filename.$extension"
+        else
+            # Cleanup
+            if $delete_tmp; then
+                rm -r "$filepath"
+            fi
+            echo "Descargado en ""$genomic_dir""$filename.$extension"
+        fi
     fi
 }
 
-delete_tmp=false
+delete_tmp=true
 num_process=3
 while getopts ":h:d:i:o:a:" opt; do
     case "${opt}" in
         i)
             input_file="${OPTARG}"
-            ;;
+        ;;
         o)
             output_dir=$(realpath "${OPTARG}")"/"
-            ;;
+        ;;
         a)
             echo "API Key en archivo: ""${OPTARG}"" se van a poder, máximo 10 descargas a la vez"
-            api_key=$( cat "${OPTARG}" )
+            api_key=$(cat "${OPTARG}")
             num_process=10
-            ;;
+        ;;
         d)
             delete_tmp=true
-            ;;
+        ;;
         h)
             print_help
             exit 0
-            ;;
+        ;;
         \?)
             echo "Invalid option: -$OPTARG"
             print_help
             exit 1
-            ;;
+        ;;
     esac
 done
 echo "Archivo TSV: ""$input_file"
-echo "API KEY: ""$api_key"
 echo "Directorio para directorio GENOMIC: ""$output_dir"
 # Create temporary and output directories
 tmp_dir="$output_dir""tmp/"
 genomic_dir="$output_dir""GENOMIC/"
 
-mkdir -p "$tmp_dir" "$genomic_dir" || { echo "Error creating directories"; exit 1; }
-echo "Creado" "$tmp_dir" "$genomic_dir"
-# ARTIFICIAL LIMIT FOR TESTING
-files_to_download=200
+mkdir -p "$tmp_dir" "$genomic_dir" || {
+    echo "Error creating directories"
+    exit 1
+}
+echo "Creado" "$tmp_dir"
+echo "Creado" "$genomic_dir"
+prefix="GCA"
+echo "Prefijo a preferir: $GCA"
 
 tail -n +2 "$input_file" |
-head -n +$files_to_download |
 process_filename |
-remove_redundant_GCA |
-remove_column_4 |
-while read -r accession accession_name filename ; do
+keep_GCX |
+while read -r accession accession_name filename; do
     # Start download in the background
     
     download_and_unzip &
     
     # Limit the number of concurrent jobs
     if [[ $(jobs -r -p | wc -l) -ge $num_process ]]; then
-        wait -n || wait
-        #wait -n # FIXME: en bash <4.3 no existe wait -n entonces toca hacer que acabe un bache de descargas antes de continuar
+        wait -n || wait 2>/dev/null
+        #wait -n # en bash <4.3 no existe wait -n entonces toca hacer que acabe un bache de descargas antes de continuar
     fi
     
 done
-# Wait for all background jobs to finish
+# Wait for all background jobs to finish and probably fails on older systems when the preious wait is fullfilled because the signals get mixed
 wait
-
-cleanup
