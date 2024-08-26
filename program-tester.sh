@@ -9,7 +9,10 @@ print_help() {
     echo ""
     echo "Ejemplo de correr en un solo hilo:"
     echo "../program-tester.sh -o ../ptester/ -t 1"
-    echo "Ejemplo "
+    echo "Ejemplo de probador de hilos:"
+    echo "seq 1 8 | xargs -I {}  ../program-tester.sh -o ../results/threads/ptester/ -t {}"
+    echo "seq 8 -1 1 | xargs -I {}  ../program-tester.sh -o ../results/threads/ptester/ -t {}"
+    echo ""
     echo ""
 }
 
