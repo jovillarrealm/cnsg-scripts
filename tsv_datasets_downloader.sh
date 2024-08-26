@@ -19,14 +19,6 @@ fi
 
 
 cleanup() {
-    # Pregunta si va a borrar $tmp_dir
-    # -p "Desea borrar archivos temporales? " -n 1 -r
-    #echo    # (optional) move to a new line
-    #if [[ $REPLY =~ ^[Yy]$ ]]
-    #then
-    #    rm -r "$tmp_dir"
-    #    # do dangerous stuff
-    #fi
 
     if $delete_tmp; then
         echo "Borrando temporales"
@@ -126,7 +118,6 @@ download_and_unzip() {
         extension="${extracted##*.}"
         mmv -d -o  "$filepath/$archive_file/"* "$genomic_dir/$filename.$extension" # || { echo "Error moving files"; exit 1; }
         echo "Descargado en""$downloaded_path"
-        #rm -r $filepath
     fi
 }
 
