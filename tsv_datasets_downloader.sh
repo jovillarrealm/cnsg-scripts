@@ -12,12 +12,12 @@ print_help() {
     
 }
 delete_tmp=false
+num_process=3
 
 if [[ $# -lt 2 ]]; then
   print_help
   exit 1
 fi
-
 while getopts ":h:d:i:o:a:" opt; do
     case "${opt}" in
         h)
@@ -59,8 +59,9 @@ cleanup() {
     #    # do dangerous stuff
     #fi
 
-    if [[ $delete_tmp ]]
+    if [[ $delete_tmp =~ true ]]
     then
+        echo "Borrando temporales"
         rm -r "$tmp_dir"
         # do dangerous stuff
     fi
@@ -119,7 +120,7 @@ END {
 
 remove_column_4() {
     awk 'BEGIN { FS="\t"; OFS=" " } {
-    gsub(/\t/, OFS); print 
+    print $1, $2, $3 
     }'
 }
 
@@ -160,13 +161,6 @@ download_and_unzip() {
     fi
 }
 
-# Convención:
-# accession_genero-especie_infraespecific-name.zip
-#grep "GCA_"|
-#wc -l
-#less
-#exit 0
-#head -n +40 |
 
 # Create temporary and output directories
 tmp_dir="$output_dir""tmp/"
