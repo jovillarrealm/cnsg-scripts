@@ -22,11 +22,12 @@ cleanup() {
 
 
 function extraer_time(){
-    tail -n 23 "$out_dir""$out_file" > "$tmp_dir""$log_name" && mv "$tmp_dir""$log_name" "$out_dir""$out_file"
+    
+    tail -n 23 "$out_file" > "$tmp_dir"tmpfile && mv "$tmp_dir"tmpfile "$out_file"
     local user_time
-    user_time=$(awk 'BEGIN { FS=": "; OFS=" " } NR == 2 {print $2}' "$out_dir""$out_file")
+    user_time=$(awk 'BEGIN { FS=": "; OFS=" " } NR == 2 {print $2}' "$out_file")
     local mrss
-    mrss=$(awk 'BEGIN { FS=": "; OFS=" " } NR == 10 {print $2}' "$out_dir""$out_file")
+    mrss=$(awk 'BEGIN { FS=": "; OFS=" " } NR == 10 {print $2}' "$out_file")
     echo "$user_time"';'"$mrss"';'"$threads"';'"$(( ${elements[i]} * ${elements[j]} ))" >> "$out_dir""$resource_file_name"
 }
 
@@ -67,8 +68,7 @@ function permutations() {
     for (( i=0; i<n; i++ )); do
         for (( j=i; j<n; j++ )); do
             echo "${elements[i]}" "${elements[j]}"
-            output_name="test${elements[i]}x${elements[j]}.csv"
-            log_name="log${elements[i]}x${elements[j]}.csv"
+            output_name="test${elements[i]}x${elements[j]}.tsv"
             query_data=$(head -n "${elements[i]}" "$tmp_dir""$find_file" | tee "$tmp_dir"ql"${elements[i]}".txt)
             reference_data=$(tail -n "${elements[j]}" "$tmp_dir""$find_file" | tee "$tmp_dir"rl"${elements[j]}".txt)
             #echo "$query_data"
@@ -77,9 +77,9 @@ function permutations() {
             out_file="$out_dir"time"${elements[i]}"x"${elements[j]}".txt
             if [[ $( bash --version ) =~ 5.2.21 ]]
             then
-                /usr/bin/time -v fastani --ql "$tmp_dir"ql"${elements[i]}".txt --rl "$tmp_dir"rl"${elements[j]}".txt -t "$threads" -o "$out_dir""$output_name" 1> "$out_dir""$log_name" 2> "$out_dir""$out_file"
+                /usr/bin/time -v fastani --ql "$tmp_dir"ql"${elements[i]}".txt --rl "$tmp_dir"rl"${elements[j]}".txt -t "$threads" -o "$out_dir""$output_name" 2> "$out_file"
             else
-                /usr/bin/time -v fastANI --ql "$tmp_dir"ql"${elements[i]}".txt --rl "$tmp_dir"rl"${elements[j]}".txt -t "$threads" -o "$out_dir""$output_name" 1> "$tmp_dir""$log_name" 2> "$out_dir""$out_file"
+                /usr/bin/time -v fastANI --ql "$tmp_dir"ql"${elements[i]}".txt --rl "$tmp_dir"rl"${elements[j]}".txt -t "$threads" -o "$out_dir""$output_name" 2> "$out_file"
             fi
             extraer_time
         done
@@ -87,7 +87,6 @@ function permutations() {
 }
 
 resource_file_name="recs.csv"
-
 
 tmp_dir="$out_dir""tmp/"
 find_file="tmpaths.txt"
