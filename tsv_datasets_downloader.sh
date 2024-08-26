@@ -2,7 +2,7 @@
 
 print_help() {
     echo ""
-    echo "Uso: $0 [-i tsv/input/file/path] [-o path/for/dir/GENOMIC] [-a path/to/api/key/file] [-d ]"
+    echo "Uso: $0 [-i tsv/input/file/path] [-o path/for/dir/GENOMIC] [-a path/to/api/key/file] [-d FIXME solo funciona con argumento de basura]"
     echo ""
     echo "Este programa asume que el 'datasets' de la ncbi está instalado y se llama con 'datasets'"
     echo "Este programa usa unzip, mmv, awk"
@@ -11,43 +11,12 @@ print_help() {
     echo ""
     
 }
-delete_tmp=false
-num_process=3
 
 if [[ $# -lt 2 ]]; then
   print_help
   exit 1
 fi
-while getopts ":h:d:i:o:a:" opt; do
-    case "${opt}" in
-        h)
-            print_help
-            exit 0
-            ;;
-        d)
-            delete_tmp=true
-            ;;
-        i)
-            input_file="${OPTARG}"
-            ;;
-        o)
-            output_dir="${OPTARG}"
-            ;;
-        a)
-            echo "API Key en archivo: ""${OPTARG}"" se van a poder, máximo 10 descargas a la vez"
-            api_key=$( cat "${OPTARG}" )
-            num_process=10
-            ;;
-        \?)
-            echo "Invalid option: -$OPTARG"
-            exit 1
-            ;;
-    esac
-done
 
-echo "Archivo TSV: ""$input_file"
-echo "API KEY: ""$api_key"
-echo "Directorio para directorio GENOMIC: ""$output_dir"
 
 cleanup() {
     # Pregunta si va a borrar $tmp_dir
@@ -59,14 +28,14 @@ cleanup() {
     #    # do dangerous stuff
     #fi
 
-    if [[ $delete_tmp =~ true ]]
-    then
+    if $delete_tmp; then
         echo "Borrando temporales"
         rm -r "$tmp_dir"
         # do dangerous stuff
+    else 
+        echo "No se borran archivos temporales"
     fi
 }
-
 
 process_filename() {
     awk 'BEGIN { FS="\t"; OFS="\t" } {
@@ -161,13 +130,45 @@ download_and_unzip() {
     fi
 }
 
-
+delete_tmp=false
+num_process=3
+while getopts ":h:d:i:o:a:" opt; do
+    case "${opt}" in
+        i)
+            input_file="${OPTARG}"
+            ;;
+        o)
+            output_dir="${OPTARG}"
+            ;;
+        a)
+            echo "API Key en archivo: ""${OPTARG}"" se van a poder, máximo 10 descargas a la vez"
+            api_key=$( cat "${OPTARG}" )
+            num_process=10
+            ;;
+        d)
+            delete_tmp=true
+            ;;
+        h)
+            print_help
+            exit 0
+            ;;
+        \?)
+            echo "Invalid option: -$OPTARG"
+            print_help
+            exit 1
+            ;;
+    esac
+done
+echo "Archivo TSV: ""$input_file"
+echo "API KEY: ""$api_key"
+echo "Directorio para directorio GENOMIC: ""$output_dir"
 # Create temporary and output directories
 tmp_dir="$output_dir""tmp/"
 genomic_dir="$output_dir""GENOMIC/"
 
 mkdir -p "$tmp_dir" "$genomic_dir" || { echo "Error creating directories"; exit 1; }
 echo "Creado" "$tmp_dir" "$genomic_dir"
+# ARTIFICIAL LIMIT FOR TESTING
 files_to_download=40
 
 tail -n +2 "$input_file" |

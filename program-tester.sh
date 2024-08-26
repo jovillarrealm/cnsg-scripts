@@ -2,12 +2,14 @@
 
 print_help() {
     echo ""
-    echo "Uso: $0 [-i tsv/input/file/path] [-o path/for/dir/GENOMIC] [-d  para borrar tmp] [-t numero de procesos]"
+    echo "Uso: $0 [-o path/for/results] [-t numero de procesos] [-d  para borrar tmp FIXME]"
     echo ""
-    echo "Este programa se debería llamar desde el directorio GENOMIC para no tener que lidiar con esos paths en la "
-    echo "Este programa usa unzip, mmv, awk"
-    echo "Primera área de mejora, pasar flags de acá a datasets"
-    echo "De momento solo se maneja --api-key indirectamente"
+    echo "Este programa se llama desde el directorio GENOMIC para no tener que lidiar con paths en los archivos de output "
+    echo "Llama a fastani con los threads especficados, por alguna razón parece funcionar mejor sin multithreading"
+    echo ""
+    echo "Ejemplo de correr en un solo hilo:"
+    echo "../program-tester.sh -o ../ptester/ -t 1"
+    echo "Ejemplo "
     echo ""
 }
 
@@ -25,18 +27,16 @@ function extraer_time(){
     user_time=$(awk 'BEGIN { FS=": "; OFS=" " } NR == 2 {print $2}' "$out_dir""$out_file")
     local mrss
     mrss=$(awk 'BEGIN { FS=": "; OFS=" " } NR == 10 {print $2}' "$out_dir""$out_file")
-    echo "$user_time" "$mrss" "$(( ${elements[i]} * ${elements[j]} ))" >> "$out_dir""$resource_file_name"
+    echo "$user_time"';'"$mrss"';'"$threads"';'"$(( ${elements[i]} * ${elements[j]} ))" >> "$out_dir""$resource_file_name"
 }
 
-
-
-if [[ $# -lt 2 ]]; then
+if [[ $# -lt 1 ]]; then
     print_help
     exit 1
 fi
 
 delete_tmp=false
-while getopts "h:d:i:o:t:" opt; do
+while getopts "h:d:o:t:" opt; do
     case "${opt}" in
         h)
             print_help
@@ -44,9 +44,6 @@ while getopts "h:d:i:o:t:" opt; do
         ;;
         d)
             delete_tmp=true
-        ;;
-        i)
-            input_file="${OPTARG}"
         ;;
         o)
             out_dir="${OPTARG}"
@@ -70,8 +67,8 @@ function permutations() {
     for (( i=0; i<n; i++ )); do
         for (( j=i; j<n; j++ )); do
             echo "${elements[i]}" "${elements[j]}"
-            output_name="test${elements[i]}x${elements[j]}.fastani"
-            log_name="log${elements[i]}x${elements[j]}.fastani"
+            output_name="test${elements[i]}x${elements[j]}.csv"
+            log_name="log${elements[i]}x${elements[j]}.csv"
             query_data=$(head -n "${elements[i]}" "$tmp_dir""$find_file" | tee "$tmp_dir"ql"${elements[i]}".txt)
             reference_data=$(tail -n "${elements[j]}" "$tmp_dir""$find_file" | tee "$tmp_dir"rl"${elements[j]}".txt)
             #echo "$query_data"
@@ -89,16 +86,22 @@ function permutations() {
     done
 }
 
-resource_file_name="recs.txt"
+resource_file_name="recs.csv"
+
+
 tmp_dir="$out_dir""tmp/"
 find_file="tmpaths.txt"
 mkdir -p "$out_dir" "$tmp_dir"
 
+if [[ -f "$out_dir""$resource_file_name" ]] 
+then 
+    echo "Preexisting recs file, appending..."
+else 
+    echo "user_time;mrss;threads;number of comparisons" >> "$out_dir""$resource_file_name"
+
+fi
 # Encuentra los archivos, asumiendo que el archivo se corre con pwd en GENOMIC y los guarda a un archivo
 data=$(find "." -name "GC*.fna" | tee "$tmp_dir""$find_file")
-
-
-echo "Run con t=$threads:" >> "$out_dir""$resource_file_name"
 
 elements=(1 10)
 permutations "${elements[@]}"
