@@ -160,7 +160,7 @@ genomic_dir="$output_dir""GENOMIC/"
 mkdir -p "$tmp_dir" "$genomic_dir" || { echo "Error creating directories"; exit 1; }
 echo "Creado" "$tmp_dir" "$genomic_dir"
 # ARTIFICIAL LIMIT FOR TESTING
-files_to_download=40
+files_to_download=200
 
 tail -n +2 "$input_file" |
 head -n +$files_to_download |
