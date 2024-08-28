@@ -8,11 +8,20 @@ recs <- read.csv(
   header = TRUE,
   sep = ";"
 )
-
-ggplot(recs, aes(x = comparisons_number, y = user_time)) +
-  geom_point() +
+print(recs)
+recs <- recs[order(recs$comparisons_number), ]
+print(recs)
+# scale_x_log10() +
+ggplot(recs, aes(x = comparisons, y = user_time)) +
+  scale_x_discrete() +
+  scale_y_log10() +
+  geom_bar(stat = "identity") +
   labs(
-    title = "Scatter Plot of time vs comparisons",
-    x = "# of comparisons",
-    y = "User time (s)"
-  )
+    title = "Scatter Plot of log(Comparisons) vs log(User Time)",
+    x = "Comparisons (QxR)",
+    y = "User Time (s)"
+  ) +
+  theme_minimal()
+
+# Print the plot explicitly (optional)
+print(last_plot())

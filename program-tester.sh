@@ -31,7 +31,7 @@ function extraer_time(){
     user_time=$(awk 'BEGIN { FS=": "; OFS=" " } NR == 2 {print $2}' "$out_file")
     local mrss
     mrss=$(awk 'BEGIN { FS=": "; OFS=" " } NR == 10 {print $2}' "$out_file")
-    echo "$user_time"';'"$mrss"';'"$threads"';'"$(( ${elements[i]} * ${elements[j]} ))" >> "$out_dir""$resource_file_name"
+    echo "$user_time"';'"$mrss"';'"$threads"';'"$(( ${elements[i]} * ${elements[j]} ))"';'"${elements[i]}x${elements[j]}" >> "$out_dir""$resource_file_name"
 }
 
 if [[ $# -lt 1 ]]; then
@@ -99,13 +99,13 @@ if [[ -f "$out_dir""$resource_file_name" ]]
 then 
     echo "Preexisting recs file, appending..."
 else 
-    echo "user_time;mrss;threads;comparisons_number" >> "$out_dir""$resource_file_name"
+    echo "user_time;mrss;threads;comparisons_number;comparisons" >> "$out_dir""$resource_file_name"
 
 fi
 # Encuentra los archivos, asumiendo que el archivo se corre con pwd en GENOMIC y los guarda a un archivo
 data=$(find "." -name "GC*.fna" | tee "$tmp_dir""$find_file")
 
-elements=(1 10 100)
+elements=(1 10 100 1000 3000)
 permutations "${elements[@]}"
 
 cleanup
