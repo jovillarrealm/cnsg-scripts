@@ -105,7 +105,7 @@ fi
 # Encuentra los archivos, asumiendo que el archivo se corre con pwd en GENOMIC y los guarda a un archivo
 data=$(find "." -name "GC*.fna" | tee "$tmp_dir""$find_file")
 
-elements=(1 10 100 1000 3000)
+elements=(1 10 100 1000 2000)
 permutations "${elements[@]}"
 
 cleanup
