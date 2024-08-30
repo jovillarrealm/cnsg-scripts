@@ -2,7 +2,7 @@ library(tidyverse)
 
 # Load the data
 recs <- read.csv(
-  file = "/home/jorge/22julia/eDNA-empty/ptester/recs.csv",
+  file = "/home/portatilcnsg/Desktop/JoRepos/csng-scripts/recs.csv",
   header = TRUE,
   sep = ";"
 )
@@ -32,21 +32,25 @@ plot_user_time <- ggplot(recs_sorted_grouped, aes(x = comparisons, y = avg_user_
   geom_bar(stat = "identity") +
   scale_y_log10() +
   labs(
-    title = "Plot of log(User Time (s)) by Comparisons",
+    title = "FastANI's plot of log(User Time (s)) by Comparisons",
     x = "Comparisons (QxR)",
     y = "log(Average User Time) (s)"
   ) +
+  geom_text(aes(label = paste(round(avg_user_time / 3600, 3), "h"), vjust = -0.5)) +
   theme_classic()
+
+png()
 
 # Plot for mrss
 plot_mrss <- ggplot(recs_sorted_grouped_mrss, aes(x = comparisons, y = mrss)) +
   geom_bar(stat = "identity") +
   scale_y_log10() +
   labs(
-    title = "Plot of log(MRSS (KB)) by Comparisons",
+    title = "FasANI's Plot of log(MRSS (KB)) by Comparisons",
     x = "Comparisons (QxR)",
     y = "log(Maximum Resident Set Size) (KB)"
   ) +
+  geom_text(aes(label = paste(round(mrss / (1024 * 1024), 0), "GB"), vjust = -0.5)) +
   theme_classic()
 
 # Print both plots explicitly
