@@ -78,12 +78,9 @@ function permutations() {
             #echo XXXXXXXXXXX
             #echo "$reference_data"
             out_file="$out_dir"time"${elements[i]}"x"${elements[j]}".txt
-            if [[ $( bash --version ) =~ 5.2.21 ]]
-            then
-                /usr/bin/time -v fastani --ql "$tmp_dir"ql"${elements[i]}".txt --rl "$tmp_dir"rl"${elements[j]}".txt -t "$threads" -o "$out_dir""$output_name" 2> "$out_file"
-            else
-                /usr/bin/time -v fastANI --ql "$tmp_dir"ql"${elements[i]}".txt --rl "$tmp_dir"rl"${elements[j]}".txt -t "$threads" -o "$out_dir""$output_name" 2> "$out_file"
-            fi
+
+            /usr/bin/time -v fastani --ql "$tmp_dir"ql"${elements[i]}".txt --rl "$tmp_dir"rl"${elements[j]}".txt -t "$threads" -o "$out_dir""$output_name" 2> "$out_file" ||
+            /usr/bin/time -v fastANI --ql "$tmp_dir"ql"${elements[i]}".txt --rl "$tmp_dir"rl"${elements[j]}".txt -t "$threads" -o "$out_dir""$output_name" 2> "$out_file"
             extraer_time
         done
     done
