@@ -2,7 +2,9 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
+	"encoding/csv"
 	"io"
 	"os"
 	"sort"
@@ -13,10 +15,10 @@ import (
 
 // Sequence represents a FASTA sequence with its statistics
 type Sequence struct {
-	ID   string // Sequence identifier
-	Len  int    // Length of the sequence
-	GC   int    // Count of G and C nucleotides
-	N    int    // Count of N nucleotides
+	ID  string // Sequence identifier
+	Len int    // Length of the sequence
+	GC  int    // Count of G and C nucleotides
+	N   int    // Count of N nucleotides
 }
 
 func main() {
@@ -37,8 +39,20 @@ func main() {
 	// Process the file and get sequence statistics
 	sequences := processFile(file)
 
-	// Print the calculated statistics
-	printStats(sequences)
+	// Define a flag to specify the output file
+	outputFile := flag.String("output", "", "Specify output CSV file")
+	appendMode := flag.Bool("append", false, "Append to the CSV file if it exists")
+
+	// Parse the command-line flags
+	flag.Parse()
+	// Check if an output file is specified
+	if *outputFile != "" {
+		handle_csv(outputFile, appendMode)
+	} else {
+
+		// Print the calculated statistics
+		printStats(sequences)
+	}
 }
 
 // processFile reads the FASTA file and returns a slice of Sequence structs
@@ -49,7 +63,7 @@ func processFile(file io.Reader) []Sequence {
 
 	var sequences []Sequence
 	var currentSeq Sequence
-	seqBuffer := bytebufferpool.Get() // Get a buffer from the pool
+	seqBuffer := bytebufferpool.Get()   // Get a buffer from the pool
 	defer bytebufferpool.Put(seqBuffer) // Return the buffer to the pool when done
 
 	for scanner.Scan() {
@@ -152,4 +166,32 @@ func printNStats(lengths []int, totalLength int) {
 	fmt.Printf("N25 stats:\t\t25%% of total sequence length is contained in the %d sequences >= %d bp\n", n25count, n25)
 	fmt.Printf("N50 stats:\t\t50%% of total sequence length is contained in the %d sequences >= %d bp\n", n50count, n50)
 	fmt.Printf("N75 stats:\t\t75%% of total sequence length is contained in the %d sequences >= %d bp\n", n75count, n75)
+}
+
+func handle_csv(outputFile *string, appendMode *bool) {
+	// Open the file in append or write mode
+	var file *os.File
+	var err error
+	if *appendMode {
+		file, err = os.OpenFile(*outputFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	} else {
+		file, err = os.Create(*outputFile)
+	}
+	if err != nil {
+		fmt.Println("Error opening file:", err)
+		return
+	}
+	defer file.Close()
+
+	// Create a CSV writer
+	writer := csv.NewWriter(file)
+	defer writer.Flush()
+
+	// Write the record to the CSV file
+	err = writer.Write(record)
+	if err != nil {
+		fmt.Println("Error writing to CSV:", err)
+	} else {
+		fmt.Println("Data written to", *outputFile)
+	}
 }
