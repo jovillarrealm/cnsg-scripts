@@ -129,7 +129,7 @@ while getopts ":h:d:i:o:a:" opt; do
             input_file="${OPTARG}"
             ;;
         o)
-            output_dir="${OPTARG}"
+            output_dir=$(realpath "${OPTARG}")"/"
             ;;
         a)
             echo "API Key en archivo: ""${OPTARG}"" se van a poder, máximo 10 descargas a la vez"
@@ -174,7 +174,7 @@ while read -r accession accession_name filename ; do
     
     # Limit the number of concurrent jobs
     if [[ $(jobs -r -p | wc -l) -ge $num_process ]]; then
-        wait
+        wait -n || wait
         #wait -n # FIXME: en bash <4.3 no existe wait -n entonces toca hacer que acabe un bache de descargas antes de continuar
     fi
     
