@@ -37,9 +37,12 @@ function extraer_time(){
 }
 
 function hottogo() {
-    hyper-gen sketch --path "$q_dir" --out "testql${elements[i]}.sketch" -t "$threads"
-    hyper-gen sketch --path "$r_dir" --out "testrl${elements[j]}.sketch" -t "$threads"
-    hyper-gen dist -r "$r_dir" -q "$q_dir" --out "$output_name" -t "$threads"
+    rl_file="$tmp_dir""testrl${elements[j]}.sketch"
+    ql_file="$tmp_dir""testql${elements[i]}.sketch"
+    hyper-gen sketch --path "$q_dir" --out "$ql_file" -t "$threads"
+    hyper-gen sketch --path "$r_dir" --out "$rl_file" -t "$threads"
+    hyper-gen dist -r "$rl_file" -q "$ql_file" --out "$output_name" -t "$threads"
+    echo "Done"
 }
 
 if [[ $# -lt 1 ]]; then
@@ -89,9 +92,8 @@ function permutations() {
             mkdir -p "$q_dir" "$r_dir"
             head -n "${elements[i]}" "$tmp_dir""$find_file" | xargs -I {} ln {} -t "$q_dir" 2> /dev/null
             tail -n "${elements[j]}" "$tmp_dir""$find_file" | xargs -I {} ln {} -t "$r_dir" 2> /dev/null
-            sleep 5
             out_file="$out_dir"time"${elements[i]}"x"${elements[j]}".txt
-            /usr/bin/time -v hottogo  2> "$out_file"
+            hottogo
             extraer_time
         done
     done
