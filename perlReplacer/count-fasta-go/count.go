@@ -2,86 +2,91 @@ package main
 
 import (
 	"bufio"
+	"encoding/csv"
 	"fmt"
-	"io"
 	"os"
+	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/valyala/bytebufferpool"
 )
 
-// Sequence represents a FASTA sequence with its statistics
 type Sequence struct {
-	ID   string // Sequence identifier
-	Len  int    // Length of the sequence
-	GC   int    // Count of G and C nucleotides
-	N    int    // Count of N nucleotides
+	ID   string
+	Len  int
+	GC   int
+	N    int
 }
 
 func main() {
-	// Check if a file path is provided as a command-line argument
-	if len(os.Args) < 2 {
-		fmt.Println("Usage: go run script.go <fasta_file>")
+	if len(os.Args) < 3 {
+		fmt.Println("Usage: go run script.go <fasta_file> <output_csv>")
 		os.Exit(1)
 	}
 
-	// Open the FASTA file
-	file, err := os.Open(os.Args[1])
+	fastaFile := os.Args[1]
+	outputCSV := os.Args[2]
+
+	sequences, err := processFile(fastaFile)
 	if err != nil {
-		fmt.Println("Error opening file:", err)
+		fmt.Printf("Error processing file: %v\n", err)
 		os.Exit(1)
+	}
+
+	stats := calculateStats(sequences)
+	printStats(stats)
+	err = writeStatsToCSV(outputCSV, stats, fastaFile)
+	if err != nil {
+		fmt.Printf("Error writing to CSV: %v\n", err)
+		os.Exit(1)
+	}
+}
+
+func processFile(path string) ([]Sequence, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
 	}
 	defer file.Close()
 
-	// Process the file and get sequence statistics
-	sequences := processFile(file)
-
-	// Print the calculated statistics
-	printStats(sequences)
-}
-
-// processFile reads the FASTA file and returns a slice of Sequence structs
-func processFile(file io.Reader) []Sequence {
 	scanner := bufio.NewScanner(file)
-	// Set a larger buffer size to handle long lines
 	scanner.Buffer(make([]byte, 1024*1024), 1024*1024*1024) // 1MB buffer, max 1GB line
 
 	var sequences []Sequence
 	var currentSeq Sequence
-	seqBuffer := bytebufferpool.Get() // Get a buffer from the pool
-	defer bytebufferpool.Put(seqBuffer) // Return the buffer to the pool when done
+	seqBuffer := bytebufferpool.Get()
+	defer bytebufferpool.Put(seqBuffer)
 
 	for scanner.Scan() {
 		line := scanner.Bytes()
 		if len(line) > 0 && line[0] == '>' {
-			// New sequence encountered
 			if seqBuffer.Len() > 0 {
-				// Process the previous sequence
 				currentSeq.Len = seqBuffer.Len()
 				sequences = append(sequences, currentSeq)
 				seqBuffer.Reset()
 			}
-			// Initialize new sequence
 			currentSeq = Sequence{ID: string(line[1:])}
 		} else {
-			// Process sequence data
 			seqBuffer.Write(line)
 			currentSeq.GC += countBytes(line, "GCgc")
 			currentSeq.N += countBytes(line, "Nn")
 		}
 	}
 
-	// Process the last sequence
 	if seqBuffer.Len() > 0 {
 		currentSeq.Len = seqBuffer.Len()
 		sequences = append(sequences, currentSeq)
 	}
 
-	return sequences
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+
+	return sequences, nil
 }
 
-// countBytes counts occurrences of bytes from the chars string in the data
 func countBytes(data []byte, chars string) int {
 	count := 0
 	for _, b := range data {
@@ -92,64 +97,123 @@ func countBytes(data []byte, chars string) int {
 	return count
 }
 
-// printStats calculates and prints various statistics about the sequences
-func printStats(sequences []Sequence) {
-	totalLength := 0
-	totalGC := 0
-	totalN := 0
-	lengths := make([]int, len(sequences))
-
-	for i, seq := range sequences {
-		totalLength += seq.Len
-		totalGC += seq.GC
-		totalN += seq.N
-		lengths[i] = seq.Len
-	}
-
-	// Sort lengths in descending order
-	sort.Sort(sort.Reverse(sort.IntSlice(lengths)))
-
-	// Print basic statistics
-	fmt.Printf("Total length of sequence:\t%d bp\n", totalLength)
-	fmt.Printf("Total number of sequences:\t%d\n", len(sequences))
-	fmt.Printf("Average contig length:\t%d bp\n", totalLength/len(sequences))
-	fmt.Printf("Largest contig:\t\t%d bp\n", lengths[0])
-	fmt.Printf("Shortest contig:\t%d bp\n", lengths[len(lengths)-1])
-
-	// Print N25, N50, N75 statistics
-	printNStats(lengths, totalLength)
-
-	// Print GC and N content statistics
-	fmt.Printf("Total GC count:\t\t%d bp\n", totalGC)
-	fmt.Printf("GC %%:\t\t\t%.2f %%\n", float64(totalGC)/float64(totalLength)*100)
-	fmt.Printf("Number of Ns:\t\t%d\n", totalN)
-	fmt.Printf("Ns %%:\t\t\t%.2f %%\n", float64(totalN)/float64(totalLength)*100)
+type Stats struct {
+	TotalLength      int
+	NumSequences     int
+	AverageLength    int
+	LargestContig    int
+	ShortestContig   int
+	N25              int
+	N50              int
+	N75              int
+	TotalGC          int
+	GCPercent        float64
+	TotalN           int
+	NPercent         float64
 }
 
-// printNStats calculates and prints N25, N50, and N75 statistics
-func printNStats(lengths []int, totalLength int) {
-	n25, n50, n75 := 0, 0, 0
-	n25count, n50count, n75count := 0, 0, 0
-	sum := 0
+func calculateStats(sequences []Sequence) Stats {
+	var stats Stats
+	var lengths []int
 
+	for _, seq := range sequences {
+		stats.TotalLength += seq.Len
+		stats.TotalGC += seq.GC
+		stats.TotalN += seq.N
+		lengths = append(lengths, seq.Len)
+	}
+
+	stats.NumSequences = len(sequences)
+	stats.AverageLength = stats.TotalLength / stats.NumSequences
+	sort.Sort(sort.Reverse(sort.IntSlice(lengths)))
+	stats.LargestContig = lengths[0]
+	stats.ShortestContig = lengths[len(lengths)-1]
+
+	stats.N25 = calculateNX(lengths, stats.TotalLength, 0.25)
+	stats.N50 = calculateNX(lengths, stats.TotalLength, 0.50)
+	stats.N75 = calculateNX(lengths, stats.TotalLength, 0.75)
+
+	stats.GCPercent = float64(stats.TotalGC) / float64(stats.TotalLength) * 100
+	stats.NPercent = float64(stats.TotalN) / float64(stats.TotalLength) * 100
+
+	return stats
+}
+
+func calculateNX(lengths []int, totalLength int, fraction float64) int {
+	threshold := int(float64(totalLength) * fraction)
+	var sum int
 	for _, length := range lengths {
 		sum += length
-		n75count++
-		if sum >= totalLength/4 && n25 == 0 {
-			n25 = length
-			n25count = n75count
+		if sum >= threshold {
+			return length
 		}
-		if sum >= totalLength/2 && n50 == 0 {
-			n50 = length
-			n50count = n75count
+	}
+	return 0
+}
+
+func printStats(stats Stats) {
+	fmt.Printf("Total length of sequence:\t%d bp\n", stats.TotalLength)
+	fmt.Printf("Total number of sequences:\t%d\n", stats.NumSequences)
+	fmt.Printf("Average contig length:\t%d bp\n", stats.AverageLength)
+	fmt.Printf("Largest contig:\t\t%d bp\n", stats.LargestContig)
+	fmt.Printf("Shortest contig:\t%d bp\n", stats.ShortestContig)
+	fmt.Printf("N25 stats:\t\t%d bp\n", stats.N25)
+	fmt.Printf("N50 stats:\t\t%d bp\n", stats.N50)
+	fmt.Printf("N75 stats:\t\t%d bp\n", stats.N75)
+	fmt.Printf("Total GC count:\t\t%d bp\n", stats.TotalGC)
+	fmt.Printf("GC %%:\t\t\t%.2f %%\n", stats.GCPercent)
+	fmt.Printf("Number of Ns:\t\t%d\n", stats.TotalN)
+	fmt.Printf("Ns %%:\t\t\t%.2f %%\n", stats.NPercent)
+}
+
+func writeStatsToCSV(outputPath string, stats Stats, fastaFile string) error {
+	file, err := os.OpenFile(outputPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	writer := csv.NewWriter(file)
+	writer.Comma = ';'
+	defer writer.Flush()
+
+	fileInfo, err := file.Stat()
+	if err != nil {
+		return err
+	}
+
+	if fileInfo.Size() == 0 {
+		// Write header if file is empty
+		header := []string{
+			"filename", "total_length", "number_of_sequences", "average_length",
+			"largest_contig", "shortest_contig", //"N25", "N50", "N75",
+			"total_GC", "GC_percentage", "total_N", "N_percentage",
 		}
-		if sum >= 3*totalLength/4 && n75 == 0 {
-			n75 = length
-			break
+		if err := writer.Write(header); err != nil {
+			return err
 		}
 	}
 
-	fmt.Printf("N25 stats:\t\t25%% of total sequence length is contained in the %d sequences >= %d bp\n", n25count, n25)
-	fmt.Printf("N50 stats:\t\t50%% of total sequence length is contained in the %d sequences >= %d bp\n", n50count, n50)
-	fmt.Printf("N75 stats:\t\t75%% of total sequence length is contained in the %d sequences >= %d bp\n", n75count, n75)
+	// Write stats
+	row := []string{
+		filepath.Base(fastaFile),
+		strconv.Itoa(stats.TotalLength),
+		strconv.Itoa(stats.NumSequences),
+		strconv.Itoa(stats.AverageLength),
+		strconv.Itoa(stats.LargestContig),
+		strconv.Itoa(stats.ShortestContig),
+		//strconv.Itoa(stats.N25),
+		//strconv.Itoa(stats.N50),
+		//strconv.Itoa(stats.N75),
+		strconv.Itoa(stats.TotalGC),
+		strconv.FormatFloat(stats.GCPercent, 'f', 2, 64),
+		strconv.Itoa(stats.TotalN),
+		strconv.FormatFloat(stats.NPercent, 'f', 2, 64),
+	}
+
+	if err := writer.Write(row); err != nil {
+		return err
+	}
+
+	return nil
 }
