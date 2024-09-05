@@ -87,10 +87,11 @@ function permutations() {
             q_dir="$q_incomplete""${elements[i]}/" 
             r_dir="$r_incomplete""${elements[j]}/" 
             mkdir -p "$q_dir" "$r_dir"
-            head -n "${elements[i]}" "$tmp_dir""$find_file" | xargs -I {} ln {} "$q_dir"
-            tail -n "${elements[j]}" "$tmp_dir""$find_file" | xargs -I {} ln {} "$r_dir"
+            head -n "${elements[i]}" "$tmp_dir""$find_file" | xargs -I {} ln {} -t "$q_dir" 2> /dev/null
+            tail -n "${elements[j]}" "$tmp_dir""$find_file" | xargs -I {} ln {} -t "$r_dir" 2> /dev/null
+            sleep 5
             out_file="$out_dir"time"${elements[i]}"x"${elements[j]}".txt
-            /usr/bin/time hottogo  2> "$out_file"
+            /usr/bin/time -v hottogo  2> "$out_file"
             extraer_time
         done
     done
@@ -102,9 +103,9 @@ q_incomplete="$tmp_dir""ql"
 r_incomplete="$tmp_dir""rl"
 find_file="tmpaths.txt"
 mkdir -p "$out_dir" "$tmp_dir"
-cd "GENOMIC/" || (echo "No GENOMIC" && exit 1)
-find "." -name "GC*.fna" | tee ../"$tmp_dir""$find_file"
-cd "../" || echo "No GENOMIC" || exit 
+#cd "GENOMIC/" || (echo "No GENOMIC" && exit 1)
+find "./GENOMIC/" -name "GC*.fna" | tee "$tmp_dir""$find_file"
+#cd "../" || echo "No GENOMIC" || exit 
 elements=(1 10 100)
 permutations "${elements[@]}"
 

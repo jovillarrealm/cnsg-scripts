@@ -1,4 +1,5 @@
 package main
+// This script is based on the count_fasta_cnsg.pl file, originally by Joseph Fass (modified from script by Brad Sickler and then CNSG)
 
 import (
 	"bufio"
@@ -9,18 +10,36 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-
 	"github.com/valyala/bytebufferpool"
 )
 
+
+// Sequence represents a single sequence from the FASTA file
 type Sequence struct {
-	ID   string
-	Len  int
-	GC   int
-	N    int
+	ID   string // Sequence identifier
+	Len  int    // Length of the sequence
+	GC   int    // Count of G and C nucleotides
+	N    int    // Count of N nucleotides
+}
+
+// Stats contains all calculated statistics for the sequences
+type Stats struct {
+	TotalLength      int     // Sum of all sequence lengths
+	NumSequences     int     // Total number of sequences
+	AverageLength    int     // Average sequence length
+	LargestContig    int     // Length of the largest sequence
+	ShortestContig   int     // Length of the shortest sequence
+	N25              int     // N25 statistic (25% of total length)
+	N50              int     // N50 statistic (50% of total length)
+	N75              int     // N75 statistic (75% of total length)
+	TotalGC          int     // Total count of G and C nucleotides
+	GCPercent        float64 // Percentage of GC content
+	TotalN           int     // Total count of N nucleotides
+	NPercent         float64 // Percentage of N content
 }
 
 func main() {
+	// Check if the correct number of command-line arguments are provided
 	if len(os.Args) < 3 {
 		fmt.Println("Usage: go run script.go <fasta_file> <output_csv>")
 		os.Exit(1)
@@ -29,14 +48,20 @@ func main() {
 	fastaFile := os.Args[1]
 	outputCSV := os.Args[2]
 
+	// Process the FASTA file and get sequence information
 	sequences, err := processFile(fastaFile)
 	if err != nil {
 		fmt.Printf("Error processing file: %v\n", err)
 		os.Exit(1)
 	}
 
+	// Calculate statistics from the processed sequences
 	stats := calculateStats(sequences)
-	printStats(stats)
+
+	// Print statistics to console
+	//printStats(stats)
+
+	// Write statistics to CSV file
 	err = writeStatsToCSV(outputCSV, stats, fastaFile)
 	if err != nil {
 		fmt.Printf("Error writing to CSV: %v\n", err)
@@ -44,6 +69,7 @@ func main() {
 	}
 }
 
+// processFile reads the FASTA file and extracts sequence information
 func processFile(path string) ([]Sequence, error) {
 	file, err := os.Open(path)
 	if err != nil {
@@ -62,19 +88,23 @@ func processFile(path string) ([]Sequence, error) {
 	for scanner.Scan() {
 		line := scanner.Bytes()
 		if len(line) > 0 && line[0] == '>' {
+			// Start of a new sequence
 			if seqBuffer.Len() > 0 {
+				// Save the previous sequence if it exists
 				currentSeq.Len = seqBuffer.Len()
 				sequences = append(sequences, currentSeq)
 				seqBuffer.Reset()
 			}
 			currentSeq = Sequence{ID: string(line[1:])}
 		} else {
+			// Continuation of the current sequence
 			seqBuffer.Write(line)
 			currentSeq.GC += countBytes(line, "GCgc")
 			currentSeq.N += countBytes(line, "Nn")
 		}
 	}
 
+	// Save the last sequence
 	if seqBuffer.Len() > 0 {
 		currentSeq.Len = seqBuffer.Len()
 		sequences = append(sequences, currentSeq)
@@ -87,6 +117,7 @@ func processFile(path string) ([]Sequence, error) {
 	return sequences, nil
 }
 
+// countBytes counts the occurrences of specified characters in a byte slice
 func countBytes(data []byte, chars string) int {
 	count := 0
 	for _, b := range data {
@@ -97,21 +128,7 @@ func countBytes(data []byte, chars string) int {
 	return count
 }
 
-type Stats struct {
-	TotalLength      int
-	NumSequences     int
-	AverageLength    int
-	LargestContig    int
-	ShortestContig   int
-	N25              int
-	N50              int
-	N75              int
-	TotalGC          int
-	GCPercent        float64
-	TotalN           int
-	NPercent         float64
-}
-
+// calculateStats computes various statistics from the processed sequences
 func calculateStats(sequences []Sequence) Stats {
 	var stats Stats
 	var lengths []int
@@ -139,6 +156,7 @@ func calculateStats(sequences []Sequence) Stats {
 	return stats
 }
 
+// calculateNX calculates the NX statistic (e.g., N50) for the given lengths
 func calculateNX(lengths []int, totalLength int, fraction float64) int {
 	threshold := int(float64(totalLength) * fraction)
 	var sum int
@@ -151,10 +169,11 @@ func calculateNX(lengths []int, totalLength int, fraction float64) int {
 	return 0
 }
 
+// printStats displays the calculated statistics to the console
 func printStats(stats Stats) {
 	fmt.Printf("Total length of sequence:\t%d bp\n", stats.TotalLength)
 	fmt.Printf("Total number of sequences:\t%d\n", stats.NumSequences)
-	fmt.Printf("Average contig length:\t%d bp\n", stats.AverageLength)
+	fmt.Printf("Average contig length is:\t%d bp\n", stats.AverageLength)
 	fmt.Printf("Largest contig:\t\t%d bp\n", stats.LargestContig)
 	fmt.Printf("Shortest contig:\t%d bp\n", stats.ShortestContig)
 	fmt.Printf("N25 stats:\t\t%d bp\n", stats.N25)
@@ -166,6 +185,7 @@ func printStats(stats Stats) {
 	fmt.Printf("Ns %%:\t\t\t%.2f %%\n", stats.NPercent)
 }
 
+// writeStatsToCSV writes the calculated statistics to a CSV file
 func writeStatsToCSV(outputPath string, stats Stats, fastaFile string) error {
 	file, err := os.OpenFile(outputPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {

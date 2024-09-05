@@ -1,0 +1,10 @@
+5,8c5,8
+< Shortest contig:		 bp
+< N25 stats:			25% of total sequence length is contained in the 1 sequences >= 6901780 bp
+< N50 stats:			50% of total sequence length is contained in the 1 sequences >= 6901780 bp
+< N75 stats:			75% of total sequence length is contained in the 1 sequences >= 6901780 bp
+---
+> Shortest contig:	6901780 bp
+> N25 stats:		6901780 bp
+> N50 stats:		6901780 bp
+> N75 stats:		6901780 bp
