@@ -59,7 +59,7 @@ while getopts "h:o:t:d:" opt; do
             exit 0
         ;;
         o)
-            out_dir="${OPTARG}"
+            out_dir=$(realpath "${OPTARG}")"/"
         ;;
         t)
             threads="${OPTARG}"
