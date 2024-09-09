@@ -42,6 +42,7 @@ func main() {
 	// Check if the correct number of command-line arguments are provided
 	if len(os.Args) < 3 {
 		fmt.Println("Usage: go run script.go <fasta_file> <output_csv>")
+		fmt.Println("Script")
 		os.Exit(1)
 	}
 

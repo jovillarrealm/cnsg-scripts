@@ -31,7 +31,7 @@ function extraer_time(){
     user_time=$(awk 'BEGIN { FS=": "; OFS=" " } NR == 2 {print $2}' "$out_file")
     local mrss
     mrss=$(awk 'BEGIN { FS=": "; OFS=" " } NR == 10 {print $2}' "$out_file")
-    echo "$user_time"';'"$mrss"';'"$threads"';'"$(( ${elements[i]} * ${elements[j]} ))"';'"${elements[i]}x${elements[j]}" >> "$out_dir""$resource_file_name"
+    echo "$user_time"';'"$mrss"';'"$threads"';'"$(( elements[i] * elements[j] ))"';'"${elements[i]}x${elements[j]}" >> "$out_dir""$resource_file_name"
 }
 
 if [[ $# -lt 1 ]]; then
