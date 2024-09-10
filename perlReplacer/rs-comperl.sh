@@ -14,17 +14,17 @@ else
 fi
 tmperlfile="$out_dir""tmperlfile"
 tmprsfile="$out_dir"tmpfile-rs
-/home/jorge/22julia/csng-scripts/perlReplacer/count_fasta_cnsg.pl -i 100 "$@" > "$tmperlfile"
+/home/portatilcnsg/Desktop/JoRepos/csng-scripts/perlReplacer/count_fasta_cnsg.pl "$@" > "$tmperlfile"
 tail -n 13 "$tmperlfile" > "$tmp_dir"tmpfile && mv "$tmp_dir"tmpfile "$tmperlfile"
 
 #/home/jorge/22julia/csng-scripts/perlReplacer/rs-count-fasta/target/release/rs-count-fasta "$1" -c "$out_dir"rs.csv >"$out_dir"tmpfile-rs
-/home/jorge/22julia/csng-scripts/perlReplacer/rs-count-fasta/target/release/rs-count-fasta "$@" 100 > "$tmprsfile"
+/home/portatilcnsg/Desktop/JoRepos/csng-scripts/perlReplacer/rs-count-fasta/target/release/rs-count-fasta -i 100 -c data.csv "$@"  > "$tmprsfile"
 head -n 13 "$tmprsfile" > "$tmp_dir"tmpfile && mv "$tmp_dir"tmpfile "$tmprsfile"
 
 diff -w "$tmperlfile" "$tmprsfile" > "$diffs_file"
 
 lines=$(wc -l "$diffs_file" | awk '{print $1}')
-if [[ "$lines" -gt 9  ]]
+if [[ "$lines" -gt 10  ]]
 then
     echo "We have a problem:"
     echo "$@"

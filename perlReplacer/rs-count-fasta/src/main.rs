@@ -33,10 +33,13 @@ struct AnalysisResults {
     n_count: usize,
     /// N25 statistic (length at 25% of total sequence length).
     n25: usize,
+    n25_secuence_count: usize,
     /// N50 statistic (length at 50% of total sequence length).
     n50: usize,
+    n50_secuence_count: usize,
     /// N75 statistic (length at 75% of total sequence length).
     n75: usize,
+    n75_secuence_count: usize,
     /// Length of the largest contig (sequence).
     largest_contig: usize,
     /// Length of the shortest contig (sequence).
@@ -94,6 +97,11 @@ fn main() -> io::Result<()> {
         }
     }
 
+    if fasta_files.len() > 1 {
+        eprintln!("Error: Demasiados archivos");
+        std::process::exit(1);
+    }
+
 
     let mut all_sequences = Vec::new();
     for filename in &fasta_files {
@@ -104,13 +112,13 @@ fn main() -> io::Result<()> {
     let mut results = analyze_sequences(&all_sequences, interval_size);
     results.filenames = fasta_files;
 
-    print_results(&results, interval_size);
-
+    
     if let Some(csv_file) = csv_filename {
         append_to_csv(&results, &csv_file)?;
         println!("\nResults appended to CSV file: {}", csv_file);
+    } else {
+        print_results(&results, interval_size);
     }
-
     Ok(())
 }
 
@@ -174,8 +182,11 @@ fn analyze_sequences(sequences: &[Sequence], interval_size: usize) -> AnalysisRe
         gc_count: 0,
         n_count: 0,
         n25: 0,
+        n25_secuence_count: 0,
         n50: 0,
+        n50_secuence_count: 0,
         n75: 0,
+        n75_secuence_count: 0,
         largest_contig: 0,
         shortest_contig: usize::MAX,
         length_histogram: HashMap::new(),
@@ -206,16 +217,20 @@ fn analyze_sequences(sequences: &[Sequence], interval_size: usize) -> AnalysisRe
         lengths.push(length);
     }
 
-    lengths.sort_unstable_by(|a, b| b.cmp(a)); // Sort in descending order
+    lengths.sort_unstable_by(|a, b| a.cmp(b)); // Sort in ascending order
 
     let mut cumulative_length = 0;
+    let mut cumulative_secuences = 0;
     for &length in &lengths {
         cumulative_length += length;
+        cumulative_secuences +=1;
         if results.n25 == 0 && cumulative_length >= results.total_length * 1 / 4 {
             results.n25 = length;
         }
         if results.n50 == 0 && cumulative_length >= results.total_length * 1 / 2 {
             results.n50 = length;
+            results.n50_secuence_count = cumulative_secuences;
+            break;
         }
         if results.n75 == 0 && cumulative_length >= results.total_length * 3 / 4 {
             results.n75 = length;
@@ -243,15 +258,18 @@ fn print_results(results: &AnalysisResults, interval_size: usize) {
     println!("Largest contig:\t\t{} bp", results.largest_contig);
     println!("Shortest contig:\t\t{} bp", results.shortest_contig);
     println!(
-        "N25 stats:\t\t\t25% of total sequence length is contained in the sequences >= {} bp",
+        "N25 stats:\t\t\t25% of total sequence length is contained in the {} sequences >= {} bp",
+        results.n25_secuence_count,
         results.n25
     );
     println!(
-        "N50 stats:\t\t\t50% of total sequence length is contained in the sequences >= {} bp",
+        "N50 stats:\t\t\t50% of total sequence length is contained in the {} sequences >= {} bp",
+        results.n50_secuence_count,
         results.n50
     );
     println!(
-        "N75 stats:\t\t\t75% of total sequence length is contained in the sequences >= {} bp",
+        "N75 stats:\t\t\t75% of total sequence length is contained in the {} sequences >= {} bp",
+        results.n75_secuence_count,
         results.n75
     );
     println!("Total GC count:\t\t\t{} bp", results.gc_count);
@@ -302,24 +320,24 @@ fn append_to_csv(results: &AnalysisResults, csv_filename: &str) -> io::Result<()
 
     if !file_exists {
         // Write header if the file is newly created
-        writeln!(file, "filenames;total_length;number_of_sequences;average_length;largest_contig;shortest_contig;total_GC;GC_percentage;total_N;N_percentage")?;
+        writeln!(file, "assembly_length;number_of_sequences;average_length;largest_contig;shortest_contig;N50;GC_percentage;total_N;N_percentage")?;
     }
 
     writeln!(
         file,
-        "\"{}\";{};{};{:.2};{};{};{};{:.2};{};{:.2}",
-        results.filenames.join("+"),
+        "{:?};{};{};{:.2};{};{};{};{:.2};{};{:.2}",
+        //results.filenames.join("+"),
+        Path::new(&results.filenames[0]).file_name(),
         results.total_length,
         results.sequence_count,
         results.total_length as f64 / results.sequence_count as f64,
         results.largest_contig,
         results.shortest_contig,
-        results.gc_count,
+        results.n50,
         (results.gc_count as f64 / results.total_length as f64) * 100.0,
         results.n_count,
         (results.n_count as f64 / results.total_length as f64) * 100.0,
         //results.n25,
-        //results.n50,
         //results.n75,
     )?;
 
