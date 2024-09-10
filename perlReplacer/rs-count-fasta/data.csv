@@ -1,0 +1,6 @@
+filenames;total_length;number_of_sequences;average_length;largest_contig;shortest_contig;total_GC;GC_percentage;total_N;N_percentage
+"../../GENOMIC/GCF_000009765_Streptomyces-avermitilis_MA-4680.fna+../../GENOMIC/GCF_000010605_Streptomyces-griseus_NBRC-13350.fna";17665824;3;5888608.00;9025608;94287;12620392;71.44;0;0.00
+"../../GENOMIC/GCF_000009765_Streptomyces-avermitilis_MA-4680.fna+../../GENOMIC/GCF_000010605_Streptomyces-griseus_NBRC-13350.fna";17665824;3;5888608.00;9025608;94287;12620392;71.44;0;0.00
+"../../GENOMIC/GCF_008704935_Streptomyces-vinaceus_ATCC-27476.fna+../../GENOMIC/GCF_008704935_Streptomyces-vinaceus_ATCC-27476.fna";15347018;2;7673509.00;7673509;7673509;11101466;72.34;0;0.00
+"../../GENOMIC/GCF_008704935_Streptomyces-vinaceus_ATCC-27476.fna";7673509;1;7673509.00;7673509;7673509;5550733;72.34;0;0.00
+"../../GENOMIC/GCF_008704935_Streptomyces-vinaceus_ATCC-27476.fna+../../GENOMIC/GCF_008704935_Streptomyces-vinaceus_ATCC-27476.fna";15347018;2;7673509.00;7673509;7673509;11101466;72.34;0;0.00

@@ -1,6 +1,7 @@
 ncbi_api_key.txt
-/GENOMIC
-/ptester
-/tmp
-/results
-/phylobayes
+**/GENOMIC
+**/ptester
+**/tmp
+**/results
+**/phylobayes
+**/.vscode

@@ -48,57 +48,52 @@ struct AnalysisResults {
 fn main() -> io::Result<()> {
     let args: Vec<String> = env::args().collect();
     if args.len() < 2 {
-        eprintln!(
-            "Usage: {} <fasta_file1> [fasta_file2 ...] [-i interval_size] [-c csv_file]",
-            args[0]
-        );
+        eprintln!("Usage: {} [interval_size] [-c csv_file] <fasta_file1> [fasta_file2 ...]", args[0]);
         std::process::exit(1);
     }
 
-    let mut fasta_files = Vec::new();
     let mut interval_size = 100;
     let mut csv_filename = None;
+    let mut fasta_files = Vec::new();
 
     // Parse command line arguments
     let mut i = 1;
     while i < args.len() {
         match args[i].as_str() {
+            "-i" | "--interval" => {
+                if i + 1 < args.len() {
+                    match args[i + 1].parse() {
+                        Ok(size) => {
+                            interval_size = size;
+                            i += 2;
+                        }
+                        Err(_) => {
+                            eprintln!("Error: Invalid interval size. Using default of 100.");
+                            i += 1;
+                        }
+                    }
+                } else {
+                    //eprintln!("Error: Missing interval size after -i/--interval flag. Using default of 100.");
+                    i += 1;
+                }
+            }
             "-c" | "--csv" => {
                 if i + 1 < args.len() {
                     csv_filename = Some(args[i + 1].clone());
                     i += 2;
-                } else {
-                    eprintln!("Error: Missing CSV filename after -c/--csv flag");
-                    std::process::exit(1);
-                }
-            }
-            "-i" => {
-                if let Ok(size) = args[i].parse() {
-                    interval_size = size;
-                    i += 1;
-                }
+                } 
             }
             _ => {
-                if args[i].ends_with(".fasta")
-                    || args[i].ends_with(".fas")
-                    || args[i].ends_with(".fa")
-                    || args[i].ends_with(".fna")
-                    || args[i].ends_with(".ffn")
-                    || args[i].ends_with(".faa")
-                    || args[i].ends_with(".mpfa")
-                    || args[i].ends_with(".frn")
-                {
+                if fasta_files.is_empty() && args[i].parse::<usize>().is_ok() {
+                    interval_size = args[i].parse().unwrap();
+                } else {
                     fasta_files.push(args[i].clone());
-                    i += 1;
-    
-                } 
-                else {
-                    eprintln!("Error: Invalid argument '{}'", args[i]);
-                    std::process::exit(1);
                 }
+                i += 1;
             }
         }
     }
+
 
     let mut all_sequences = Vec::new();
     for filename in &fasta_files {
@@ -107,21 +102,18 @@ fn main() -> io::Result<()> {
     }
 
     let mut results = analyze_sequences(&all_sequences, interval_size);
-    results.filenames = fasta_files.clone();
+    results.filenames = fasta_files;
 
-    if fasta_files.is_empty() {
-        eprintln!("No FASTA files specified");
-        print_results(&results, interval_size);
-        std::process::exit(0);
-    }
+    print_results(&results, interval_size);
 
     if let Some(csv_file) = csv_filename {
         append_to_csv(&results, &csv_file)?;
-        //println!("\nResults appended to CSV file: {}", csv_file);
+        println!("\nResults appended to CSV file: {}", csv_file);
     }
 
     Ok(())
 }
+
 
 /// Reads sequences from a FASTA file.
 ///
@@ -241,15 +233,15 @@ fn analyze_sequences(sequences: &[Sequence], interval_size: usize) -> AnalysisRe
 /// * `results` - The `AnalysisResults` struct containing the analysis results
 /// * `interval_size` - The interval size used for the length histogram
 fn print_results(results: &AnalysisResults, interval_size: usize) {
-    println!("\nAnalysis Results for: {}", results.filenames.join(", "));
-    println!("Total length of sequence:\t{} bp", results.total_length);
+    //println!("\nAnalysis Results for: {}", results.filenames.join(", "));
+    println!("\nTotal length of sequence:\t{} bp", results.total_length);
     println!("Total number of sequences:\t{}", results.sequence_count);
     println!(
-        "Average sequence length is:\t{} bp",
+        "Average contig length is:\t{} bp",
         results.total_length / results.sequence_count
     );
-    println!("Largest sequence:\t\t{} bp", results.largest_contig);
-    println!("Shortest sequence:\t\t{} bp", results.shortest_contig);
+    println!("Largest contig:\t\t{} bp", results.largest_contig);
+    println!("Shortest contig:\t\t{} bp", results.shortest_contig);
     println!(
         "N25 stats:\t\t\t25% of total sequence length is contained in the sequences >= {} bp",
         results.n25
