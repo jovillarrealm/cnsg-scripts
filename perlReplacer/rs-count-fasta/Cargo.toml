@@ -17,3 +17,4 @@ codegen-units = 1
 rpath = false
 
 [dependencies]
+libc = "0.2.158"

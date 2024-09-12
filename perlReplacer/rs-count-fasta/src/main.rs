@@ -5,10 +5,11 @@
 //! and N50 values. Results can be displayed on the console and optionally
 //! appended to a CSV file for further analysis.
 
-use std::collections::HashMap;
+//use std::collections::HashMap;
 use std::env;
 use std::fs::{File, OpenOptions};
-use std::io::{self, BufRead, BufReader, Write};
+use std::io::{self, BufRead, BufReader, BufWriter, stdout, Write};
+use std::os::unix::io::AsRawFd;
 use std::path::Path;
 
 /// Represents a single sequence from a FASTA file.
@@ -44,18 +45,19 @@ struct AnalysisResults {
     largest_contig: usize,
     /// Length of the shortest contig (sequence).
     shortest_contig: usize,
-    /// Histogram of sequence lengths.
-    length_histogram: HashMap<usize, usize>,
+    // Histogram of sequence lengths.
+    //length_histogram: HashMap<usize, usize>,
 }
 
 fn main() -> io::Result<()> {
     let args: Vec<String> = env::args().collect();
     if args.len() < 2 {
-        eprintln!("Usage: {} [interval_size] [-c csv_file] <fasta_file1> [fasta_file2 ...]", args[0]);
+        //eprintln!("Usage: {} [-i interval_size] [-c csv_file] <fasta_file1> [fasta_file2 ...]", args[0]);
+        eprintln!("Usage: {} [-c csv_file] <fasta_file1> [fasta_file2 ...]", args[0]);
         std::process::exit(1);
     }
 
-    let mut interval_size = 100;
+    //let mut interval_size = 1000;
     let mut csv_filename = None;
     let mut fasta_files = Vec::new();
 
@@ -63,23 +65,22 @@ fn main() -> io::Result<()> {
     let mut i = 1;
     while i < args.len() {
         match args[i].as_str() {
-            "-i" | "--interval" => {
-                if i + 1 < args.len() {
-                    match args[i + 1].parse() {
-                        Ok(size) => {
-                            interval_size = size;
-                            i += 2;
-                        }
-                        Err(_) => {
-                            eprintln!("Error: Invalid interval size. Using default of 100.");
-                            i += 1;
-                        }
-                    }
-                } else {
-                    //eprintln!("Error: Missing interval size after -i/--interval flag. Using default of 100.");
-                    i += 1;
-                }
-            }
+            //"-i" | "--interval" => {
+            //    if i + 1 < args.len() {
+            //        match args[i + 1].parse() {
+            //            Ok(size) => {
+            //                interval_size = size;
+            //                i += 2;
+            //            }
+            //            Err(_) => {
+            //                eprintln!("Error: Invalid interval size. Using default of 100.");
+            //                i += 1;
+            //            }
+            //        }
+            //    } else {
+            //        i += 1;
+            //    }
+            //}
             "-c" | "--csv" => {
                 if i + 1 < args.len() {
                     csv_filename = Some(args[i + 1].clone());
@@ -88,7 +89,8 @@ fn main() -> io::Result<()> {
             }
             _ => {
                 if fasta_files.is_empty() && args[i].parse::<usize>().is_ok() {
-                    interval_size = args[i].parse().unwrap();
+                    //interval_size = args[i].parse().unwrap();
+                    ()
                 } else {
                     fasta_files.push(args[i].clone());
                 }
@@ -100,6 +102,9 @@ fn main() -> io::Result<()> {
     if fasta_files.len() > 1 {
         eprintln!("Error: Demasiados archivos");
         std::process::exit(1);
+    } else if fasta_files.len() < 1 {
+        eprintln!("Error: Sin archivos que leer");
+        std::process::exit(1);
     }
 
 
@@ -109,15 +114,15 @@ fn main() -> io::Result<()> {
         all_sequences.extend(sequences);
     }
 
-    let mut results = analyze_sequences(&all_sequences, interval_size);
+    let mut results = analyze_sequences(&all_sequences);
     results.filenames = fasta_files;
 
     
     if let Some(csv_file) = csv_filename {
         append_to_csv(&results, &csv_file)?;
-        println!("\nResults appended to CSV file: {}", csv_file);
+        //println!("\nResults appended to CSV file: {}", csv_file);
     } else {
-        print_results(&results, interval_size);
+        print_results(&results);
     }
     Ok(())
 }
@@ -174,7 +179,8 @@ fn read_fasta<P: AsRef<Path>>(filename: P) -> io::Result<Vec<Sequence>> {
 /// # Returns
 ///
 /// An `AnalysisResults` struct containing the computed statistics.
-fn analyze_sequences(sequences: &[Sequence], interval_size: usize) -> AnalysisResults {
+//fn analyze_sequences(sequences: &[Sequence], interval_size: usize) -> AnalysisResults {
+fn analyze_sequences(sequences: &[Sequence]) -> AnalysisResults {
     let mut results = AnalysisResults {
         filenames: Vec::new(), // Will be set later
         total_length: 0,
@@ -189,7 +195,7 @@ fn analyze_sequences(sequences: &[Sequence], interval_size: usize) -> AnalysisRe
         n75_secuence_count: 0,
         largest_contig: 0,
         shortest_contig: usize::MAX,
-        length_histogram: HashMap::new(),
+        //length_histogram: HashMap::new(),
     };
 
     let mut lengths: Vec<usize> = Vec::with_capacity(sequences.len());
@@ -211,8 +217,8 @@ fn analyze_sequences(sequences: &[Sequence], interval_size: usize) -> AnalysisRe
         results.largest_contig = results.largest_contig.max(length);
         results.shortest_contig = results.shortest_contig.min(length);
 
-        let interval = length / interval_size;
-        *results.length_histogram.entry(interval).or_insert(0) += 1;
+        //let interval = length / interval_size;
+        //*results.length_histogram.entry(interval).or_insert(0) += 1;
 
         lengths.push(length);
     }
@@ -226,14 +232,15 @@ fn analyze_sequences(sequences: &[Sequence], interval_size: usize) -> AnalysisRe
         cumulative_secuences +=1;
         if results.n25 == 0 && cumulative_length >= results.total_length * 1 / 4 {
             results.n25 = length;
+            results.n25_secuence_count = cumulative_secuences;
         }
         if results.n50 == 0 && cumulative_length >= results.total_length * 1 / 2 {
             results.n50 = length;
             results.n50_secuence_count = cumulative_secuences;
-            break;
         }
         if results.n75 == 0 && cumulative_length >= results.total_length * 3 / 4 {
             results.n75 = length;
+            results.n75_secuence_count = cumulative_secuences;
             break;
         }
     }
@@ -247,54 +254,58 @@ fn analyze_sequences(sequences: &[Sequence], interval_size: usize) -> AnalysisRe
 ///
 /// * `results` - The `AnalysisResults` struct containing the analysis results
 /// * `interval_size` - The interval size used for the length histogram
-fn print_results(results: &AnalysisResults, interval_size: usize) {
+//fn print_results(results: &AnalysisResults, interval_size: usize) {
+fn print_results(results: &AnalysisResults) {
+    let mut stdout = BufWriter::new(stdout());
     //println!("\nAnalysis Results for: {}", results.filenames.join(", "));
-    println!("\nTotal length of sequence:\t{} bp", results.total_length);
-    println!("Total number of sequences:\t{}", results.sequence_count);
-    println!(
+
+    writeln!(&mut stdout,"\nTotal length of sequence:\t{} bp", results.total_length).unwrap();
+    writeln!(&mut stdout,"Total number of sequences:\t{}", results.sequence_count).unwrap();
+    writeln!(&mut stdout,
         "Average contig length is:\t{} bp",
         results.total_length / results.sequence_count
-    );
-    println!("Largest contig:\t\t{} bp", results.largest_contig);
-    println!("Shortest contig:\t\t{} bp", results.shortest_contig);
-    println!(
+    ).unwrap();
+    writeln!(&mut stdout,"Largest contig:\t\t{} bp", results.largest_contig).unwrap();
+    writeln!(&mut stdout,"Shortest contig:\t\t{} bp", results.shortest_contig).unwrap();
+    writeln!(&mut stdout,
         "N25 stats:\t\t\t25% of total sequence length is contained in the {} sequences >= {} bp",
         results.n25_secuence_count,
         results.n25
-    );
-    println!(
+    ).unwrap();
+    writeln!(&mut stdout,
         "N50 stats:\t\t\t50% of total sequence length is contained in the {} sequences >= {} bp",
         results.n50_secuence_count,
         results.n50
-    );
-    println!(
+    ).unwrap();
+    writeln!(&mut stdout,
         "N75 stats:\t\t\t75% of total sequence length is contained in the {} sequences >= {} bp",
         results.n75_secuence_count,
         results.n75
-    );
-    println!("Total GC count:\t\t\t{} bp", results.gc_count);
-    println!(
+    ).unwrap();
+    writeln!(&mut stdout,"Total GC count:\t\t\t{} bp", results.gc_count).unwrap();
+    writeln!(&mut stdout,
         "GC %:\t\t\t\t{:.2} %",
         (results.gc_count as f64 / results.total_length as f64) * 100.0
-    );
-    println!("Number of Ns:\t\t\t{}", results.n_count);
-    println!(
+    ).unwrap();
+    writeln!(&mut stdout,"Number of Ns:\t\t\t{}", results.n_count).unwrap();
+    writeln!(&mut stdout,
         "Ns %:\t\t\t\t{:.2} %",
         (results.n_count as f64 / results.total_length as f64) * 100.0
-    );
+    ).unwrap();
+    stdout.flush().unwrap();
 
-    println!("\nLength histogram:");
-    let mut intervals: Vec<_> = results.length_histogram.keys().collect();
-    intervals.sort_unstable();
-    for &interval in intervals {
-        let count = results.length_histogram[&interval];
-        println!(
-            "{}:{}\t{}",
-            interval * interval_size,
-            (interval + 1) * interval_size - 1,
-            count
-        );
-    }
+    //println!("\nLength histogram:");
+    //let mut intervals: Vec<_> = results.length_histogram.keys().collect();
+    //intervals.sort_unstable();
+    //for &interval in intervals {
+    //    let count = results.length_histogram[&interval];
+    //println!(
+    //"{}:{}\t{}",
+    //        interval * interval_size,
+    //        (interval + 1) * interval_size - 1,
+    //        count
+    //    );
+    //}
 }
 
 /// Appends the analysis results to a CSV file.
@@ -318,16 +329,20 @@ fn append_to_csv(results: &AnalysisResults, csv_filename: &str) -> io::Result<()
         .create(true)
         .open(csv_filename)?;
 
+    // Use `flock` to lock the file before writing
+    let fd = file.as_raw_fd();
+    unsafe { libc::flock(fd, libc::LOCK_EX) };  // Acquire exclusive lock
+
+
     if !file_exists {
         // Write header if the file is newly created
-        writeln!(file, "assembly_length;number_of_sequences;average_length;largest_contig;shortest_contig;N50;GC_percentage;total_N;N_percentage")?;
+        writeln!(file, "filename;assembly_length;number_of_sequences;average_length;largest_contig;shortest_contig;N50;GC_percentage;total_N;N_percentage")?;
     }
-
     writeln!(
         file,
         "{:?};{};{};{:.2};{};{};{};{:.2};{};{:.2}",
         //results.filenames.join("+"),
-        Path::new(&results.filenames[0]).file_name(),
+        Path::new(&results.filenames[0]).file_name().unwrap(),
         results.total_length,
         results.sequence_count,
         results.total_length as f64 / results.sequence_count as f64,
@@ -341,5 +356,8 @@ fn append_to_csv(results: &AnalysisResults, csv_filename: &str) -> io::Result<()
         //results.n75,
     )?;
 
+
+    // Release the file lock
+    unsafe { libc::flock(fd, libc::LOCK_UN) };  // Unlock the file
     Ok(())
 }

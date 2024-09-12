@@ -1,8 +1,0 @@
-7,9c7,9
-< N25 stats:			25% of total sequence length is contained in the 2 sequences >= 9816795 bp
-< N50 stats:			50% of total sequence length is contained in the 5 sequences >= 8144008 bp
-< N75 stats:			75% of total sequence length is contained in the 7 sequences >= 8035918 bp
----
-> N25 stats:			25% of total sequence length is contained in the sequences >= 9816795 bp
-> N50 stats:			50% of total sequence length is contained in the sequences >= 8144008 bp
-> N75 stats:			75% of total sequence length is contained in the sequences >= 8035918 bp
