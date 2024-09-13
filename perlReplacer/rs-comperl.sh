@@ -18,7 +18,7 @@ tmprsfile="$out_dir"tmpfile-rs
 tail -n 13 "$tmperlfile" > "$tmp_dir"tmpfile && mv "$tmp_dir"tmpfile "$tmperlfile"
 
 #/home/jorge/22julia/csng-scripts/perlReplacer/rs-count-fasta/target/release/rs-count-fasta "$1" -c "$out_dir"rs.csv >"$out_dir"tmpfile-rs
-./rs-count-fasta/target/release/rs-count-fasta "$@" > "$tmprsfile"
+./rs-count-fasta/target/x86_64-unknown-linux-gnu/release/rs-count-fasta "$@" > "$tmprsfile"
 #head -n 13 "$tmprsfile" > "$tmp_dir"tmpfile && mv "$tmp_dir"tmpfile "$tmprsfile"
 
 diff -w "$tmperlfile" "$tmprsfile" > "$diffs_file"
