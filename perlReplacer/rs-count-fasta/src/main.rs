@@ -223,7 +223,7 @@ fn analyze_sequences(sequences: &[Sequence]) -> AnalysisResults {
         lengths.push(length);
     }
 
-    lengths.sort_unstable_by(|a, b| a.cmp(b)); // Sort in ascending order
+    lengths.sort_unstable_by(|a, b| b.cmp(a)); // Sort in descending order
 
     let mut cumulative_length = 0;
     let mut cumulative_secuences = 0;

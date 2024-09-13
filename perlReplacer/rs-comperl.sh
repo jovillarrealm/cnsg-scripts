@@ -24,7 +24,7 @@ tail -n 13 "$tmperlfile" > "$tmp_dir"tmpfile && mv "$tmp_dir"tmpfile "$tmperlfil
 diff -w "$tmperlfile" "$tmprsfile" > "$diffs_file"
 
 lines=$(wc -l "$diffs_file" | awk '{print $1}')
-if [[ "$lines" -gt 10  ]]
+if [[ "$lines" -gt 4  ]]
 then
     echo "We have a problem:"
     echo "$@"

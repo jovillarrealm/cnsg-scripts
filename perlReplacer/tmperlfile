@@ -1,0 +1,13 @@
+
+Total length of sequence:	853701469 bp
+Total number of sequences:	144
+Average contig length is:	5928482 bp
+Largest contig:			11639536 bp
+Shortest contig:		11203 bp
+N25 stats:			25% of total sequence length is contained in the 21 sequences >= 9682870 bp
+N50 stats:			50% of total sequence length is contained in the 45 sequences >= 8541354 bp
+N75 stats:			75% of total sequence length is contained in the 71 sequences >= 7760770 bp
+Total GC count:			610690221 bp
+GC %:				71.53 %
+Number of Ns:			0
+Ns %:				0.00 %
