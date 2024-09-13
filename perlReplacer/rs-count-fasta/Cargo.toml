@@ -18,3 +18,14 @@ rpath = false
 
 [dependencies]
 libc = "0.2.158"
+
+[target.'x86_64-unknown-linux-gnu']
+rustflags = ["-C", "target-feature=+crt-static"]
+[target.'x86_64-unknown-linux-gnu'.dependencies]
+libc = "0.2.158"
+
+[target.'aarch64-apple-darwin']
+rustflags = [ "-C", "target-feature=+crt-static"]
+[target.'aarch64-apple-darwin'.dependencies]
+libc = "0.2.158" # Adjust the version as needed
+#RUSTFLAGS="-C target-feature=+crt-static" cargo build --target x86_64-unknown-linux-gnu --release
