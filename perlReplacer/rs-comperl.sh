@@ -14,7 +14,7 @@ else
 fi
 tmperlfile="$out_dir""tmperlfile"
 tmprsfile="$out_dir"tmpfile-rs
-./count_fasta_cnsg.pl -i 100 "$@" > "$tmperlfile" 
+./count_fasta_cnsg.pl -i 100 "$@" > "$tmperlfile" 2> /dev/null
 tail -n 13 "$tmperlfile" > "$tmp_dir"tmpfile && mv "$tmp_dir"tmpfile "$tmperlfile"
 
 #/home/jorge/22julia/csng-scripts/perlReplacer/rs-count-fasta/target/release/rs-count-fasta "$1" -c "$out_dir"rs.csv >"$out_dir"tmpfile-rs
