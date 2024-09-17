@@ -37,11 +37,11 @@ process_filename() {
     split($3, words, " ")
     var2 = words[1] "-" words[2]
     # Remove non-alphanumeric characters from $5 and replace spaces with '-'
-    gsub(/ /, "-", $5)
-    gsub(/[^a-zA-Z0-9\-]/, "", $5)
-    # Remove consecutive "-" in $5
-    gsub(/-+/, "-", $5)
-    var3 = $5
+    gsub(/ /, "-", $6)
+    gsub(/[^a-zA-Z0-9\-]/, "", $6)
+    # Remove consecutive "-" in $6
+    gsub(/-+/, "-", $6)
+    var3 = $6
     # Output to the following variables: accession accession_name filename
     print $1,var1, var1"_"var2"_"var3, var4
     }'
@@ -82,15 +82,19 @@ remove_column_4() {
 
 download_and_unzip() {
     # Shadowing redundante sobre todo para saber mas o menos cual es el input de esta función
+    # Tambien puede que la concurrenca joda esta asignacones pero no tengo la paciencia de averiguarlo.
+    # Entonces este estado qued encapsulado dentro de la función
+    # Esto pone restricciones porque esto implica que esta función no puede llamar más funciones sin
     local accession=$accession
     local accession_name=$accession_name
     local filename=$filename
-    local filepath="$tmp_dir""$accession_name"
+    local filepath="$tmp_dir""$accession_name""/"
     local complete_zip_path="$filepath""$accession_name.zip"
     local downloaded_path="$genomic_dir""$filename.fna"
     # Descarga de archivos
     if [ -f "$downloaded_path" ]; then
         echo "Ya estaba descargado en $downloaded_path"
+        return
     else
 
         # Create directory for downloaded files
@@ -102,32 +106,33 @@ download_and_unzip() {
         # Download genome using 'datasets' (assuming proper installation)
         if [ "$num_process" -eq 3 ]; then
             if ! datasets download genome accession "$accession" --filename "$complete_zip_path" --no-progressbar; then # || { echo "Error downloading genome: $accession"; exit 1; }
-                echo "**** FAILED TO DOWNLOAD"
+                echo "**** FAILED TO DOWNLOAD $accession , en  $complete_zip_path"
                 return 1
             fi
         else
             if ! datasets download genome accession "$accession" --filename "$complete_zip_path" --api-key "$api_key" --no-progressbar; then # || { echo "Error downloading genome: $accession"; exit 1; }
-                echo "**** FAILED TO DOWNLOAD"
+                echo "**** ERROR TO DOWNLOAD $accession , en  $complete_zip_path"
                 return 1
             fi
         fi
 
         # Unzip genome
         archive_file="ncbi_dataset/data/$accession"
-        searchpath="$filepath/$archive_file"
+        searchpath="$filepath""$archive_file"
         unzip -oq "$complete_zip_path" "$archive_file""/GC*_genomic.fna" -d "$filepath"
 
         # Move to desired location
         extracted=$(find "$searchpath" -name "*" -type f)
         extension="${extracted##*.}"
-        mmv -d -o "$filepath/$archive_file/"* "$genomic_dir/$filename.$extension"
-
-        # Cleanup
-        if $delete_tmp; then
-            rm -r "$filepath"
+        if ! mmv -d -o "$filepath""$archive_file/"* "$genomic_dir""$filename.$extension"; then
+            echo "**** ERROR TO MOVE contents of : " "$filepath""$archive_file/" "  in  " "$genomic_dir""$filename.$extension"
+        else
+            # Cleanup
+            if $delete_tmp; then
+                rm -r "$filepath"
+            fi
         fi
-
-        echo "Descargado en""$genomic_dir/$filename.$extension"
+        echo "Descargado en""$genomic_dir""$filename.$extension"
     fi
 }
 
@@ -171,11 +176,8 @@ mkdir -p "$tmp_dir" "$genomic_dir" || {
     exit 1
 }
 echo "Creado" "$tmp_dir" "$genomic_dir"
-# ARTIFICIAL LIMIT FOR TESTING
-files_to_download=200
 
 tail -n +2 "$input_file" |
-    head -n +$files_to_download |
     process_filename |
     remove_redundant_GCA |
     remove_column_4 |
@@ -186,14 +188,10 @@ tail -n +2 "$input_file" |
 
         # Limit the number of concurrent jobs
         if [[ $(jobs -r -p | wc -l) -ge $num_process ]]; then
-            wait -n || wait 2> /dev/null
+            wait -n || wait 2>/dev/null
             #wait -n # en bash <4.3 no existe wait -n entonces toca hacer que acabe un bache de descargas antes de continuar
         fi
 
     done
-# Wait for all background jobs to finish
+# Wait for all background jobs to finish and probably fails on older systems when the preious wait is fullfilled because the signals get mixed
 wait
-
-if $delete_tmp; then
-    rm -r "$tmp_dir"
-fi
