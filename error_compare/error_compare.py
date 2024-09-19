@@ -42,23 +42,24 @@ def read_fastani_data(fastani_path):
     fastani_data: dict[frozenset[str], tuple[float, int, int]] = dict()
     unhandled: dict[frozenset[str], tuple[float, int, int]] = dict()
     for file in os.listdir(fastani_path):
-        with open(fastani_path + file, "r") as fastani_file:
-            for line in fastani_file:
-                file1, file2, ANI, mappings, total_fragments = line.split("\t")
-                code1 = extract_code(file1)
-                code2 = extract_code(file2)
-                if code1 is not None and code2 is not None:
-                    fastani_data[frozenset((code1, code2))] = (
-                        float(ANI),
-                        int(mappings),
-                        int(total_fragments),
-                    )
-                else:
-                    unhandled[frozenset((file1, file2))] = (
-                        float(ANI),
-                        int(mappings),
-                        int(total_fragments),
-                    )
+        if file.endswith("txt"):
+            with open(fastani_path + file, "r") as fastani_file:
+                for line in fastani_file:
+                    file1, file2, ANI, mappings, total_fragments = line.split("\t")
+                    code1 = extract_code(file1)
+                    code2 = extract_code(file2)
+                    if code1 is not None and code2 is not None:
+                        fastani_data[frozenset((code1, code2))] = (
+                            float(ANI),
+                            int(mappings),
+                            int(total_fragments),
+                        )
+                    else:
+                        unhandled[frozenset((file1, file2))] = (
+                            float(ANI),
+                            int(mappings),
+                            int(total_fragments),
+                        )
     return fastani_data, unhandled
 
 
@@ -67,7 +68,7 @@ def read_fastani_data(fastani_path):
 
 def main():
     mummer = pd.read_csv(
-        "/home/jorge/22julia/csng-scripts/error_compare/mummer.csv",
+        "error_compare/mummer.csv",
         names=["file1", "file2", "AI", "aligned_bases", "SNPs"],
         sep=";",
     )
@@ -78,7 +79,7 @@ def main():
     spearman_tests(mummer, "AI", "SNPs", "AI vs SNPs")
 
     fastani = pd.read_csv(
-        "/home/jorge/22julia/csng-scripts/error_compare/fastani.csv",
+        "error_compare/fastani.csv",
         names=["file1", "file2", "ANI", "mappings", "total_fragments"],
         sep=";",
     )
@@ -126,7 +127,7 @@ def spearman_tests(data, c1: str, c2: str, title: str):
 def extracter():
     mummer_path = "/home/users/javillamar/cnsg-scripts/Streptomces_1020_Select_USAL_TABLAfullDNADIFF.csv"
     partial_path = "/home/users/jfar/temp/FastANIfiles_TXT/"
-    mummer_path = "/home/jorge/22julia/csng-scripts/error_compare/Streptomces_1020_Select_USAL_TABLAfullDNADIFF.csv"
+    mummer_path = "/home/portatilcnsg/Desktop/JoRepos/cnsg-scripts/error_compare/Streptomces_1020_Select_USAL_TABLAfullDNADIFF.csv"
     extract_code("GCA_0000097652_Streptomyces_avermitilis_MA-4680_NBRC14893_MA-4680_")
     print("Reading the mummer file")
     mummer, unhandled_mummer = read_mummer_data(mummer_path)
@@ -144,4 +145,4 @@ def extracter():
     # write_2_csv(unhandled_mae,"unhandled_mae.csv")
 
 
-main()
+extracter()

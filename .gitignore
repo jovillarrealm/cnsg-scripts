@@ -1,6 +1,7 @@
 ncbi_api_key.txt
 **/GENOMIC
 **/ptester
+**/fastani.csv
 **/tmp
 **/results
 **/phylobayes
