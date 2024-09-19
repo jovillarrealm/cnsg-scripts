@@ -2,7 +2,7 @@
 
 print_help() {
     echo ""
-    echo "Uso: $0 [-i path/to/file] [-o path/to/file] [-k  input delimiter] [-l  output delimiter]"
+    echo "Usage: $0 [-i path/to/file] [-o path/to/file] [-k  input delimiter] [-l  output delimiter]"
     echo ""
     echo "Este programa convierte un archivo de valores separados por delimitador k en otro archivo de valores separado por delimitador l "
     echo ""

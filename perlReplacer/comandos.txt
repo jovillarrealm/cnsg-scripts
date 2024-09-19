@@ -1,4 +1,0 @@
-find GENOMIC/ -type f |time  xargs -I {} ./count_fasta_cnsg.pl -i 100 {} > tmperlfile
-find GENOMIC/ -type f |time xargs -I {} ./rs-count-fasta/target/release/rs-count-fasta {} > tmprsfile
-find GENOMIC/ -type f |time xargs -P 8 -I {} ./count_fasta_cnsg.pl -i 100 {} > tmperlfile
-find GENOMIC/ -type f |time xargs -P 8 -I {} ./rs-count-fasta/target/release/rs-count-fasta {} > tmprsfile
