@@ -22,7 +22,7 @@ if [[ $# -lt 2 ]]; then
 fi
 
 process_filename() {
-    awk -v c1="1" -v c2="2" -v c3="3" 'BEGIN { FS="\t"; OFS="\t" } {
+    awk 'BEGIN { FS="\t"; OFS="\t" } {
     # Remove version number of Assembly Accession, or $1
     split($1, arr, ".")
     var1 = arr[1]
@@ -30,15 +30,15 @@ process_filename() {
     split(var1, nodb, "_")
     var4 = nodb[2]
     # Take only first 2 words in Organism Name y eso equivale a genero y especie? and replace spaces with '-'
-    gsub(/[^a-zA-Z0-9 ]/, "", $3)
-    split($3, words, " ")
+    gsub(/[^a-zA-Z0-9 ]/, "", $2)
+    split($2, words, " ")
     var2 = words[1] "-" words[2]
-    # Remove non-alphanumeric characters from $5 and replace spaces with '-'
-    gsub(/ /, "-", $6)
-    gsub(/[^a-zA-Z0-9\-]/, "", $6)
-    # Remove consecutive "-" in $6
-    gsub(/-+/, "-", $6)
-    var3 = $6
+    # Remove non-alphanumeric characters from $3 and replace spaces with '-'
+    gsub(/ /, "-", $3)
+    gsub(/[^a-zA-Z0-9\-]/, "", $3)
+    # Remove consecutive "-" in $3
+    gsub(/-+/, "-", $3)
+    var3 = $3
     # Output to the following variables: accession accession_name filename
     print $1,var1, var1"_"var2"_"var3, var4
     }'
@@ -75,18 +75,15 @@ END {
 
 download_and_unzip() {
     # Shadowing redundante sobre todo para saber mas o menos cual es el input de esta función
-    # Tambien puede que la concurrenca joda esta asignacones pero no tengo la paciencia de averiguarlo.
-    # Entonces este estado qued encapsulado dentro de la función
-    # Esto pone restricciones porque esto implica que esta función no puede llamar más funciones sin
     local accession=$accession
     local accession_name=$accession_name
     local filename=$filename
     local filepath="$tmp_dir""$accession_name""/"
     local complete_zip_path="$filepath""$accession_name.zip"
     local downloaded_path="$genomic_dir""$filename.fna"
-    # Descarga de archivos
+    # Download files
     if [ -f "$downloaded_path" ]; then
-        echo "Ya estaba descargado en $downloaded_path"
+        echo "Already in  $downloaded_path"
         return
     else
         
@@ -124,7 +121,7 @@ download_and_unzip() {
             if $delete_tmp; then
                 rm -r "$filepath"
             fi
-            echo "Descargado en ""$genomic_dir""$filename.$extension"
+            echo "Downloaded in ""$genomic_dir""$filename.$extension"
         fi
     fi
 }
@@ -158,8 +155,8 @@ while getopts ":h:d:i:o:a:" opt; do
         ;;
     esac
 done
-echo "Archivo TSV: ""$input_file"
-echo "Directorio para directorio GENOMIC: ""$output_dir"
+echo "TSV: ""$input_file"
+echo "Output directory for GENOMIC: ""$output_dir"
 # Create temporary and output directories
 tmp_dir="$output_dir""tmp/"
 genomic_dir="$output_dir""GENOMIC/"
@@ -168,10 +165,10 @@ mkdir -p "$tmp_dir" "$genomic_dir" || {
     echo "Error creating directories"
     exit 1
 }
-echo "Creado" "$tmp_dir"
-echo "Creado" "$genomic_dir"
+echo "Created: " "$tmp_dir"
+echo "Created: " "$genomic_dir"
 prefix="GCA"
-echo "Prefijo a preferir: $GCA"
+echo "Preferred prefix: $GCA"
 
 tail -n +2 "$input_file" |
 process_filename |
@@ -183,7 +180,7 @@ while read -r accession accession_name filename; do
     
     # Limit the number of concurrent jobs
     if [[ $(jobs -r -p | wc -l) -ge $num_process ]]; then
-        wait -n || wait 2>/dev/null
+        wait -n || wait 2> /dev/null
         #wait -n # en bash <4.3 no existe wait -n entonces toca hacer que acabe un bache de descargas antes de continuar
     fi
     

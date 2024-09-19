@@ -6,7 +6,7 @@ print_help() {
     echo ""
     echo ""
     echo ""
-    echo "Este programa asume que el 'datasets' y 'dataformat' de la ncbi están en PATH"
+    echo "This script assumes 'datasets' and 'dataformat' are in PATH"
     echo ""
     echo "Usar summary datasets en pos de tsv"
     echo ""
