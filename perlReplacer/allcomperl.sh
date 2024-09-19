@@ -11,5 +11,6 @@ endspin() {
 
 for f in $(find GENOMIC/ -type f) 
 do
+    echo "$f"
     xargs -n 1 ./rs-comperl.sh "$f"
 done
