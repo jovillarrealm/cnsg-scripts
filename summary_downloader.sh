@@ -49,7 +49,7 @@ echo "Directorio para descarga: ""$output_dir"
 
 
 datasets summary genome taxon "$taxon" --assembly-source 'GenBank' --assembly-version "latest" --exclude-atypical --exclude-multi-isolate --mag "exclude" --as-json-lines | 
-dataformat tsv genome --fields accession,organism-name,organism-infraspecific-strain,assmstats-total-sequence-len,assmstats-contig-n50,assmstats-contig-l50,assmstats-gc-count,assmstats-gc-percent,checkm-contamination > "$taxon"".tsv"
+dataformat tsv genome --fields accession,organism-name,organism-infraspecific-strain,assmstats-total-sequence-len,assmstats-contig-n50,assmstats-gc-count,assmstats-gc-percent > "$taxon"".tsv"
 
 
 

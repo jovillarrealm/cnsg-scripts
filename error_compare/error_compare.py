@@ -83,6 +83,7 @@ def main():
         names=["file1", "file2", "ANI", "mappings", "total_fragments"],
         sep=";",
     )
+    print(fastani.dtypes)
     print(fastani.head())
     spearman_tests(fastani,"ANI", "mappings", "ANI vs mappings")
     spearman_tests(fastani,"ANI", "total_fragments", "ANI vs total_fragments")
@@ -145,4 +146,4 @@ def extracter():
     # write_2_csv(unhandled_mae,"unhandled_mae.csv")
 
 
-extracter()
+main()

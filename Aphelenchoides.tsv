@@ -1,9 +1,9 @@
-Assembly Accession	Organism Name	Organism Infraspecific Names Strain	Assembly Stats Total Sequence Length	Assembly Stats Contig N50	Assembly Stats Contig L50	Assembly Stats GC Count	Assembly Stats GC Percent	CheckM contamination
-GCA_024699855.1	Aphelenchoides besseyi	AORT	47428222	1080231	10	19980922	42	
-GCA_024699835.1	Aphelenchoides besseyi	AORJ	46759715	4086162	5	19534458	42	
-GCA_024699875.1	Aphelenchoides besseyi	APVT	44715554	3065467	4	18908496	42.5	
-GCA_024699915.1	Aphelenchoides besseyi	APFT	44700143	2203724	5	18922413	42.5	
-GCA_029619545.1	Aphelenchoides besseyi		50288344	1262149	8	21202487	42	
-GCA_030248265.1	Aphelenchoides besseyi	APTV	44753500	1854938	9	18946286	42.5	
-GCA_024699845.1	Aphelenchoides bicaudatus	Fsh	46428382	11905581	2	18045786	39	
-GCA_024699865.1	Aphelenchoides fujianensis	Dali	143834322	553027	69	83611425	58	
+Assembly Accession	Organism Name	Organism Infraspecific Names Strain	Assembly Stats Total Sequence Length	Assembly Stats Contig N50	Assembly Stats GC Count	Assembly Stats GC Percent
+GCA_024699855.1	Aphelenchoides besseyi	AORT	47428222	1080231	19980922	42
+GCA_024699835.1	Aphelenchoides besseyi	AORJ	46759715	4086162	19534458	42
+GCA_024699875.1	Aphelenchoides besseyi	APVT	44715554	3065467	18908496	42.5
+GCA_024699915.1	Aphelenchoides besseyi	APFT	44700143	2203724	18922413	42.5
+GCA_029619545.1	Aphelenchoides besseyi		50288344	1262149	21202487	42
+GCA_030248265.1	Aphelenchoides besseyi	APTV	44753500	1854938	18946286	42.5
+GCA_024699845.1	Aphelenchoides bicaudatus	Fsh	46428382	11905581	18045786	39
+GCA_024699865.1	Aphelenchoides fujianensis	Dali	143834322	553027	83611425	58
