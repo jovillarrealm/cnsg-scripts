@@ -43,13 +43,19 @@ while getopts ":h:i:o:a:" opt; do
         ;;
     esac
 done
-echo "TSV para: ""$taxon"
-echo "Directorio para descarga: ""$output_dir"
+echo "TSV: ""$taxon"
+echo "Download: ""$output_dir"
+
 # Create temporary and output directories
+mkdir -p  "$output_dir" || {
+    echo "Error creating output directories"
+    exit 1
+}
 
+download_file="$output_dir""$taxon""$(date +'%d-%m-%Y')"".tsv"
 
-datasets summary genome taxon "$taxon" --assembly-source 'GenBank' --assembly-version "latest" --exclude-atypical --exclude-multi-isolate --mag "exclude" --as-json-lines | 
-dataformat tsv genome --fields accession,organism-name,organism-infraspecific-strain,assmstats-total-sequence-len,assmstats-contig-n50,assmstats-gc-count,assmstats-gc-percent > "$taxon"".tsv"
+datasets summary genome taxon "$taxon" --assembly-source 'GenBank' --assembly-version "latest" --exclude-atypical --exclude-multi-isolate --mag "exclude" --api-key "$api_key" --as-json-lines | 
+dataformat tsv genome --fields accession,organism-name,organism-infraspecific-strain,assmstats-total-sequence-len,assmstats-contig-n50,assmstats-gc-count,assmstats-gc-percent > "$download_file"
 
 
 

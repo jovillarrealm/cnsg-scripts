@@ -2,12 +2,14 @@
 
 print_help() {
     echo ""
-    echo "Usage: $0 -i tsv/input/file/path -o path/for/dir/GENOMIC [-a path/to/api/key/file]"
+    echo "Usage: $0 -i tsv/input/file/path -o path/for/dir/GENOMIC [-a path/to/api/key/file] [-p preferred prefix]"
     echo ""
     echo ""
     echo ""
     echo "This script assumes 'datasets' and 'dataformat' are in PATH"
     echo "It uses unzip, awk, xargs, datasets, dataformat"
+    echo ""
+    echo "prefered prefix can either be GCA (default, GenBank) of GCF (RefSeq)"
     echo ""
     echo "Falta reportes de errores para añadir robustez y prevenir mal uso"
     echo "Elegir y confirmar columnas de a leer por tsv"
@@ -95,12 +97,12 @@ download_and_unzip() {
         
         # Download genome using 'datasets' (assuming proper installation)
         if [ "$num_process" -eq 3 ]; then
-            if ! datasets download genome accession "$accession" --filename "$complete_zip_path" --no-progressbar; then # || { echo "Error downloading genome: $accession"; exit 1; }
+            if ! datasets download genome accession "$accession" --filename "$complete_zip_path" --include genome --no-progressbar; then # || { echo "Error downloading genome: $accession"; exit 1; }
                 echo "**** FAILED TO DOWNLOAD $accession , en  $complete_zip_path"
                 return 1
             fi
         else
-            if ! datasets download genome accession "$accession" --filename "$complete_zip_path" --api-key "$api_key" --no-progressbar; then # || { echo "Error downloading genome: $accession"; exit 1; }
+            if ! datasets download genome accession "$accession" --filename "$complete_zip_path" --include genome --api-key "$api_key" --no-progressbar; then # || { echo "Error downloading genome: $accession"; exit 1; }
                 echo "**** ERROR TO DOWNLOAD $accession , en  $complete_zip_path"
                 return 1
             fi
@@ -128,7 +130,8 @@ download_and_unzip() {
 
 delete_tmp=true
 num_process=3
-while getopts ":h:d:i:o:a:" opt; do
+prefix="GCA"
+while getopts ":h:p:i:o:a:" opt; do
     case "${opt}" in
         i)
             input_file="${OPTARG}"
@@ -137,12 +140,13 @@ while getopts ":h:d:i:o:a:" opt; do
             output_dir=$(realpath "${OPTARG}")"/"
         ;;
         a)
-            echo "API Key en archivo: ""${OPTARG}"" se van a poder, máximo 10 descargas a la vez"
+            api_key_file="${OPTARG}"
+            echo "API Key en archivo: ""${api_key_file}"" se van a poder, máximo 10 descargas a la vez"
             api_key=$(cat "${OPTARG}")
             num_process=10
         ;;
-        d)
-            delete_tmp=true
+        p)
+            prefix="${OPTARG}"
         ;;
         h)
             print_help
@@ -167,12 +171,13 @@ mkdir -p "$tmp_dir" "$genomic_dir" || {
 }
 echo "Created: " "$tmp_dir"
 echo "Created: " "$genomic_dir"
-prefix="GCA"
-echo "Preferred prefix: $GCA"
+echo "Preferred prefix: $prefix"
+
+tmp_names="$tmp_dir""/tmp_names"
 
 tail -n +2 "$input_file" |
 process_filename |
-keep_GCX |
+keep_GCX  > "$tmp_names"
 while read -r accession accession_name filename; do
     # Start download in the background
     
@@ -184,6 +189,6 @@ while read -r accession accession_name filename; do
         #wait -n # en bash <4.3 no existe wait -n entonces toca hacer que acabe un bache de descargas antes de continuar
     fi
     
-done
+done < "$tmp_names"
 # Wait for all background jobs to finish and probably fails on older systems when the preious wait is fullfilled because the signals get mixed
 wait
