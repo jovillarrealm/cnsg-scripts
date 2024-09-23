@@ -56,8 +56,13 @@ mkdir -p  "$output_dir" || {
 
 download_file="$output_dir""$taxon""_""$(date +'%d-%m-%Y')"".tsv"
 
-datasets summary genome taxon "$taxon" --assembly-source 'all' --assembly-version "latest" --exclude-atypical --exclude-multi-isolate --mag "exclude" --api-key "$api_key" --as-json-lines | 
-dataformat tsv genome --fields accession,organism-name,organism-infraspecific-strain,assmstats-total-sequence-len,assmstats-contig-n50,assmstats-gc-count,assmstats-gc-percent > "$download_file"
+if [ -z ${api_key+x} ]; then
+    datasets summary genome taxon "$taxon" --assembly-source 'all' --assembly-version "latest" --exclude-atypical --exclude-multi-isolate --mag "exclude" --as-json-lines |
+    dataformat tsv genome --fields accession,organism-name,organism-infraspecific-strain,assmstats-total-sequence-len,assmstats-contig-n50,assmstats-gc-count,assmstats-gc-percent > "$download_file"
+else
+    datasets summary genome taxon "$taxon" --api-key "$api_key" --assembly-source 'all' --assembly-version "latest" --exclude-atypical --exclude-multi-isolate --mag "exclude"  --as-json-lines |
+    dataformat tsv genome --fields accession,organism-name,organism-infraspecific-strain,assmstats-total-sequence-len,assmstats-contig-n50,assmstats-gc-count,assmstats-gc-percent > "$download_file"
+fi
 
 
 

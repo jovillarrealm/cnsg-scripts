@@ -123,8 +123,6 @@ download_and_unzip() {
             if $delete_tmp; then
                 rm -r "$filepath"
             fi
-            # echo "Downloaded in ""$genomic_dir""$filename.$extension"
-            export downloaded=true
         fi
     fi
 }
@@ -134,15 +132,14 @@ print_progress() {
     remaining_files=$((total_files - downloaded_files - 1))
     echo -n "$remaining_files"
     while [[ "$remaining_files" -gt "0" ]]; do
-        echo -n ", ""$remaining_files" 
-        sleep 5
+        echo -n ", ""$remaining_files"
+        sleep 15
         downloaded_files=$(find "$genomic_dir" -type f | wc -l)
         remaining_files=$((total_files - downloaded_files - 1))
     done
 }
 
 # Start program
-export downloaded=false
 delete_tmp=true
 num_process=3
 prefix="GCA"

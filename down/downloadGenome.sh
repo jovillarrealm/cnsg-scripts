@@ -89,12 +89,12 @@ echo
 echo
 echo
 echo "** STARTING DOWNLOADS **"
-    if [ -z ${api_key_file+x} ]; then
-        echo "API KEY FILE NOT SET, PLEASE GET ONE FOR FASTER AND BETTER TRANSFERS"
-        ./tsv_datasets_downloader.sh -i "$download_file" -o "$output_dir" -p "$prefix"
-    else
-        ./tsv_datasets_downloader.sh -i "$download_file" -o "$output_dir" -a "$api_key_file" -p "$prefix"
-    fi
+if [ -z ${api_key_file+x} ]; then
+    echo "API KEY FILE NOT SET, PLEASE GET ONE FOR FASTER AND BETTER TRANSFERS"
+    ./tsv_datasets_downloader.sh -i "$download_file" -o "$output_dir" -p "$prefix"
+else
+    ./tsv_datasets_downloader.sh -i "$download_file" -o "$output_dir" -a "$api_key_file" -p "$prefix"
+fi
 rm -fr "$output_dir""tmp/"
 echo
 echo "** DONE **"
@@ -110,8 +110,8 @@ echo "Hardlinks made"
 
 
 # Stats if they don´t already exist
-stats_file="$output_dir""$taxon""_""$today"".stats.csv"
-stats_refseq_file="$ref_seq_dir""$taxon""_""$today"".refseq.stats.csv"
+stats_file="$output_dir""$taxon""_""$today""_stats.csv"
+stats_refseq_file="$ref_seq_dir""$taxon""_""$today""_refseq_stats.csv"
 num_process="$(nproc)"
 num_process="$((num_process / 2))"
 
