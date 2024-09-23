@@ -17,7 +17,7 @@ if [[ $# -lt 2 ]]; then
     exit 1
 fi
 
-# Make a directory filled with hardlinks to 
+# Make a directory filled with hardlinks to
 make_hardlinks() {
     ref_seq_dir="$output_dir""GENOMIC_ref_seq/"
     mkdir -p "$ref_seq_dir"
@@ -71,7 +71,13 @@ echo "** STARTING SUMMARY DOWNLOAD **"
 # If the summary already ran before, skip it
 download_file="$output_dir""$taxon""_""$today"".tsv"
 if [ ! -f "$download_file" ];then
-    ./summary_downloader.sh -i "$taxon" -o "$output_dir" -a "$api_key_file"
+    if [ -z ${api_key_file+x} ]; then
+        ./summary_downloader.sh -i "$taxon" -o "$output_dir"
+        echo "API KEY FILE NOT SET, PLEASE GET ONE FOR FASTER AND BETTER TRANSFERS"
+    else
+        ./summary_downloader.sh -i "$taxon" -o "$output_dir" -a "$api_key_file"
+    fi
+    
 else
     echo "Summary for $today exists"
 fi
@@ -83,7 +89,12 @@ echo
 echo
 echo
 echo "** STARTING DOWNLOADS **"
-./tsv_datasets_downloader.sh -i "$download_file" -o "$output_dir" -a "$api_key_file" -p "$prefix"
+    if [ -z ${api_key_file+x} ]; then
+        echo "API KEY FILE NOT SET, PLEASE GET ONE FOR FASTER AND BETTER TRANSFERS"
+        ./tsv_datasets_downloader.sh -i "$download_file" -o "$output_dir" -p "$prefix"
+    else
+        ./tsv_datasets_downloader.sh -i "$download_file" -o "$output_dir" -a "$api_key_file" -p "$prefix"
+    fi
 rm -fr "$output_dir""tmp/"
 echo
 echo "** DONE **"
@@ -91,7 +102,7 @@ echo
 
 
 echo
-echo "** STARTING SEGREGATION AND ANALYSIS OF SECUENCES **"
+echo "** STARTING SEGREGATION AND SECUENCE ANALYSIS **"
 # Make hardlinks
 genomic_dir="$output_dir""GENOMIC/"
 make_hardlinks
@@ -119,7 +130,7 @@ else
 fi
 
 
-if [[ -d "$ref_seq_dir" ]]; then 
+if [[ -d "$ref_seq_dir" ]]; then
     if [ ! -f "$stats_refseq_file" ];then
         echo "filename;assembly_length;number_of_sequences;average_length;largest_contig;shortest_contig;N50;GC_percentage;total_N;N_percentage" > "$stats_refseq_file"
     fi
@@ -130,7 +141,6 @@ if [[ -d "$ref_seq_dir" ]]; then
         find "$ref_seq_dir" -type f -print0 | xargs -0 -I {} -P  "$num_process" count-fasta-rs -c "$stats_refseq_file"  {}
     fi
 fi
-
 echo "** DONE **"
 echo
 echo
