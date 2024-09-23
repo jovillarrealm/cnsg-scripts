@@ -63,7 +63,20 @@ def read_fastani_data(fastani_path):
     return fastani_data, unhandled
 
 
-
+def read_hypergen_data(path):
+    hypergen_data: dict[tuple[str, ...], float] = dict()
+    unhandled= dict()
+    with open(path, "r") as hyper_gen_file:
+        for line in hyper_gen_file:
+            file1, file2, ANI= line.split("\t")
+            code1 = extract_code(file1)
+            code2 = extract_code(file2)
+            if code1 is not None and code2 is not None:
+                key_thing: tuple[str,...] = tuple(sorted([code1,code2]))
+                hypergen_data[key_thing] = float(ANI)
+            else:
+                unhandled[(code1, code2)] = float(ANI)
+    return hypergen_data, unhandled
 
 
 def main():
@@ -95,17 +108,22 @@ def write_2_csv(data_dict, title):
         paperback_writer = csv.writer(f, delimiter=";")
         for tup, froset in data_dict.items():
             code1, code2 = tup
-            if len(froset) == 3:
-                v1, v2, v3 = froset
-                paperback_writer.writerow((code1, code2, v1, v2, v3))
-            elif len(froset) == 2:
-                v1, v2 = froset
-                paperback_writer.writerow((code1, code2, v1, v2))
-                print(froset)
-            elif len(froset) == 1:
+            if isinstance( froset,frozenset):
+                if len(froset) == 3:
+                    v1, v2, v3 = froset
+                    paperback_writer.writerow((code1, code2, v1, v2, v3))
+                elif len(froset) == 2:
+                    v1, v2 = froset
+                    paperback_writer.writerow((code1, code2, v1, v2))
+                    print(froset)
+                elif len(froset) == 1:
+                    v1, v2 = froset
+                    paperback_writer.writerow((code1, code2, v1))
+                    print(froset)
+            elif issubclass(float, froset):
                 v1, v2 = froset
                 paperback_writer.writerow((code1, code2, v1))
-                print(froset)
+
 
 
 def spearman_tests(data, c1: str, c2: str, title: str):
@@ -126,24 +144,23 @@ def spearman_tests(data, c1: str, c2: str, title: str):
 
 
 def extracter():
-    mummer_path = "/home/users/javillamar/cnsg-scripts/Streptomces_1020_Select_USAL_TABLAfullDNADIFF.csv"
-    partial_path = "/home/users/jfar/temp/FastANIfiles_TXT/"
-    mummer_path = "/home/portatilcnsg/Desktop/JoRepos/cnsg-scripts/error_compare/Streptomces_1020_Select_USAL_TABLAfullDNADIFF.csv"
-    extract_code("GCA_0000097652_Streptomyces_avermitilis_MA-4680_NBRC14893_MA-4680_")
-    print("Reading the mummer file")
-    mummer, unhandled_mummer = read_mummer_data(mummer_path)
-    print("writing files")
-    write_2_csv(mummer, "mummer.csv")
-    print("Reading fastani files")
+    #mummer_path = "/home/users/javillamar/cnsg-scripts/Streptomces_1020_Select_USAL_TABLAfullDNADIFF.csv"
+    #partial_path = "/home/users/jfar/temp/FastANIfiles_TXT/"
+    #mummer_path = "/home/portatilcnsg/Desktop/JoRepos/cnsg-scripts/error_compare/Streptomces_1020_Select_USAL_TABLAfullDNADIFF.csv"
+    #mummer, unhandled_mummer = read_mummer_data(mummer_path)
+    #write_2_csv(mummer, "mummer.csv")
     # fastani, unhandled_fastani = read_fastani_data(partial_path)
-    print("writing files")
     # write_2_csv(fastani,"fastani.csv")
-    print("Comparing datasets")
+
     # mae, unhandled_mae = compare_datasets(mummer,fastani)
 
     # write_2_csv(unhandled_mummer,"unhandled_mummer.csv")
     # write_2_csv(unhandled_fastani,"unhandled_fastani.csv")
     # write_2_csv(unhandled_mae,"unhandled_mae.csv")
+    hypergen_file_path="./hypergen.out"
+    hypergen_file_path="/home/portatilcnsg/Desktop/JoRepos/cnsg-scripts/error_compare/hypergen.out"
+    hypergen_data, unhandled = read_hypergen_data(hypergen_file_path)
+    #print("unhanlded:", unhandled)
+    write_2_csv(hypergen_data, "hypergen.csv")
 
-
-main()
+extracter()
