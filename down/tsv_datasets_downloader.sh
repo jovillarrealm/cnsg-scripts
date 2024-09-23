@@ -85,7 +85,7 @@ download_and_unzip() {
     local downloaded_path="$genomic_dir""$filename.fna"
     # Download files
     if [ -f "$downloaded_path" ]; then
-        echo "Already in  $downloaded_path"
+        # echo "Already in  $downloaded_path"
         return
     else
         
@@ -123,11 +123,26 @@ download_and_unzip() {
             if $delete_tmp; then
                 rm -r "$filepath"
             fi
-            echo "Downloaded in ""$genomic_dir""$filename.$extension"
+            # echo "Downloaded in ""$genomic_dir""$filename.$extension"
+            export downloaded=true
         fi
     fi
 }
 
+print_progress() {
+    downloaded_files=$(find "$genomic_dir" -type f | wc -l)
+    remaining_files=$((total_files - downloaded_files - 1))
+    echo -n "$remaining_files"
+    while [[ "$remaining_files" -gt "0" ]]; do
+        echo -n ", ""$remaining_files" 
+        sleep 5
+        downloaded_files=$(find "$genomic_dir" -type f | wc -l)
+        remaining_files=$((total_files - downloaded_files - 1))
+    done
+}
+
+# Start program
+export downloaded=false
 delete_tmp=true
 num_process=3
 prefix="GCA"
@@ -174,6 +189,13 @@ echo "Created: " "$genomic_dir"
 echo "Preferred prefix: $prefix"
 
 tmp_names="$tmp_dir""/tmp_names"
+total_files=$( wc -l < "$input_file" )
+
+echo -n "Remaining files: "
+print_progress &
+
+
+
 
 tail -n +2 "$input_file" |
 process_filename |
@@ -185,7 +207,7 @@ while read -r accession accession_name filename; do
     
     # Limit the number of concurrent jobs
     if [[ $(jobs -r -p | wc -l) -ge $num_process ]]; then
-        wait -n || wait 2> /dev/null
+        wait -n || wait
         #wait -n # en bash <4.3 no existe wait -n entonces toca hacer que acabe un bache de descargas antes de continuar
     fi
     

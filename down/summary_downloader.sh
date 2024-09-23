@@ -8,7 +8,7 @@ print_help() {
     echo ""
     echo "This script assumes 'datasets' and 'dataformat' are in PATH"
     echo ""
-    echo "Usar summary datasets en pos de tsv"
+    echo "Summaries will include duplication"
     echo ""
     echo ""
     
@@ -43,6 +43,8 @@ while getopts ":h:i:o:a:" opt; do
         ;;
     esac
 done
+
+# START OF THE PROGRAM
 echo "TSV: ""$taxon"
 echo "Download: ""$output_dir"
 
@@ -52,9 +54,9 @@ mkdir -p  "$output_dir" || {
     exit 1
 }
 
-download_file="$output_dir""$taxon""$(date +'%d-%m-%Y')"".tsv"
+download_file="$output_dir""$taxon""_""$(date +'%d-%m-%Y')"".tsv"
 
-datasets summary genome taxon "$taxon" --assembly-source 'GenBank' --assembly-version "latest" --exclude-atypical --exclude-multi-isolate --mag "exclude" --api-key "$api_key" --as-json-lines | 
+datasets summary genome taxon "$taxon" --assembly-source 'all' --assembly-version "latest" --exclude-atypical --exclude-multi-isolate --mag "exclude" --api-key "$api_key" --as-json-lines | 
 dataformat tsv genome --fields accession,organism-name,organism-infraspecific-strain,assmstats-total-sequence-len,assmstats-contig-n50,assmstats-gc-count,assmstats-gc-percent > "$download_file"
 
 
