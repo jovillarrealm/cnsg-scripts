@@ -204,7 +204,7 @@ while read -r accession accession_name filename; do
     
     # Limit the number of concurrent jobs
     if [[ $(jobs -r -p | wc -l) -ge $num_process ]]; then
-        wait -n || wait
+        wait
         #wait -n # en bash <4.3 no existe wait -n entonces toca hacer que acabe un bache de descargas antes de continuar
     fi
     
