@@ -77,9 +77,9 @@ END {
 
 download_and_unzip() {
     # Shadowing redundante sobre todo para saber mas o menos cual es el input de esta función
-    local accession=$accession
-    local accession_name=$accession_name
-    local filename=$filename
+    local accession="$1"
+    local accession_name="$2"
+    local filename="$3"
     local filepath="$tmp_dir""$accession_name""/"
     local complete_zip_path="$filepath""$accession_name.zip"
     local downloaded_path="$genomic_dir""$filename.fna"
@@ -200,7 +200,7 @@ keep_GCX  > "$tmp_names"
 while read -r accession accession_name filename; do
     # Start download in the background
     
-    download_and_unzip &
+    xargs -p -I {} download_and_unzip "${}" "${}" "${}" &
     
     # Limit the number of concurrent jobs
     if [[ $(jobs -r -p | wc -l) -ge $num_process ]]; then
