@@ -127,17 +127,17 @@ download_and_unzip() {
     fi
 }
 
-print_progress() {
-    downloaded_files=$(find "$genomic_dir" -type f | wc -l)
-    remaining_files=$((total_files - downloaded_files - 1))
-    echo -n "$remaining_files"
-    while [[ "$remaining_files" -gt "0" ]]; do
-        echo -n ", ""$remaining_files"
-        sleep 15
-        downloaded_files=$(find "$genomic_dir" -type f | wc -l)
-        remaining_files=$((total_files - downloaded_files - 1))
-    done
-}
+#print_progress() {
+#    downloaded_files=$(find "$genomic_dir" -type f | wc -l)
+#    remaining_files=$((total_files - downloaded_files - 1))
+#    echo -n "$remaining_files"
+#    while [[ "$remaining_files" -gt "0" ]]; do
+#        echo -n ", ""$remaining_files"
+#        sleep 15
+#        downloaded_files=$(find "$genomic_dir" -type f | wc -l)
+#        remaining_files=$((total_files - downloaded_files - 1))
+#    done
+#}
 
 # Start program
 delete_tmp=true
@@ -186,10 +186,10 @@ echo "Created: " "$genomic_dir"
 echo "Preferred prefix: $prefix"
 
 tmp_names="$tmp_dir""/tmp_names"
-total_files=$( wc -l < "$input_file" )
 
-echo -n "Remaining files: "
-print_progress &
+#total_files=$( wc -l < "$input_file" )
+#echo -n "Remaining files: "
+#print_progress &
 
 
 
