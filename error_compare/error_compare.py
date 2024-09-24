@@ -14,7 +14,7 @@ def extract_code(field: str) -> str | None:
 
 
 def read_mummer_data(path):
-    mummer_data: dict[frozenset[str], tuple[float, float, int]] = dict()
+    mummer_data: dict[tuple[str, ...], tuple[float, float, int]] = dict()
     unhandled: dict[frozenset[str], tuple[float, float, int]] = dict()
     with open(path, "r") as mummmer_file:
         for line in mummmer_file:
@@ -24,7 +24,34 @@ def read_mummer_data(path):
             code1 = extract_code(file1)
             code2 = extract_code(file2)
             if code1 is not None and code2 is not None:
-                mummer_data[frozenset((code1, code2))] = (
+                key_thing: tuple[str, ...] = tuple(sorted([code1, code2]))
+                mummer_data[key_thing] = (
+                    float(AI),
+                    float(aligned_bases),
+                    int(SNPs),
+                )
+            else:
+                unhandled[frozenset((file1, file2))] = (
+                    float(AI),
+                    float(aligned_bases),
+                    int(SNPs),
+                )
+    return mummer_data, unhandled
+
+
+def read_mummer_extracts(path):
+    mummer_data: dict[tuple[str, ...], tuple[float, float, int]] = dict()
+    unhandled: dict[frozenset[str], tuple[float, float, int]] = dict()
+    with open(path, "r") as mummmer_file:
+        for line in mummmer_file:
+            if "AvgIdentity" in line:
+                continue
+            file1, file2, aligned_bases, AI, SNPs = line.split(";")
+            code1 = extract_code(file1)
+            code2 = extract_code(file2)
+            if code1 is not None and code2 is not None:
+                key_thing: tuple[str, ...] = tuple(sorted([code1, code2]))
+                mummer_data[key_thing] = (
                     float(AI),
                     float(aligned_bases),
                     int(SNPs),
@@ -39,7 +66,7 @@ def read_mummer_data(path):
 
 
 def read_fastani_data(fastani_path):
-    fastani_data: dict[frozenset[str], tuple[float, int, int]] = dict()
+    fastani_data: dict[tuple[str, ...], tuple[float, int, int]] = dict()
     unhandled: dict[frozenset[str], tuple[float, int, int]] = dict()
     for file in os.listdir(fastani_path):
         if file.endswith("txt"):
@@ -49,7 +76,8 @@ def read_fastani_data(fastani_path):
                     code1 = extract_code(file1)
                     code2 = extract_code(file2)
                     if code1 is not None and code2 is not None:
-                        fastani_data[frozenset((code1, code2))] = (
+                        key_thing: tuple[str, ...] = tuple(sorted([code1, code2]))
+                        fastani_data[key_thing] = (
                             float(ANI),
                             int(mappings),
                             int(total_fragments),
@@ -65,18 +93,58 @@ def read_fastani_data(fastani_path):
 
 def read_hypergen_data(path):
     hypergen_data: dict[tuple[str, ...], float] = dict()
-    unhandled= dict()
+    unhandled = dict()
     with open(path, "r") as hyper_gen_file:
         for line in hyper_gen_file:
-            file1, file2, ANI= line.split("\t")
+            file1, file2, ANI = line.split("\t")
             code1 = extract_code(file1)
             code2 = extract_code(file2)
             if code1 is not None and code2 is not None:
-                key_thing: tuple[str,...] = tuple(sorted([code1,code2]))
+                key_thing: tuple[str, ...] = tuple(sorted([code1, code2]))
                 hypergen_data[key_thing] = float(ANI)
             else:
                 unhandled[(code1, code2)] = float(ANI)
     return hypergen_data, unhandled
+
+
+def read_hypergen_extracts(path):
+    hypergen_data: dict[tuple[str, ...], float] = dict()
+    unhandled = dict()
+    with open(path, "r") as hyper_gen_file:
+        for line in hyper_gen_file:
+            file1, file2, ANI = line.split(";")
+            code1 = extract_code(file1)
+            code2 = extract_code(file2)
+            if code1 is not None and code2 is not None:
+                key_thing: tuple[str, ...] = tuple(sorted([code1, code2]))
+                hypergen_data[key_thing] = float(ANI)
+            else:
+                unhandled[(code1, code2)] = float(ANI)
+    return hypergen_data, unhandled
+
+
+def read_fastani_extracts(fastani_path):
+    fastani_data: dict[tuple[str, ...], tuple[float, int, int]] = dict()
+    unhandled = dict()
+    with open(fastani_path, "r") as fastani_file:
+        for line in fastani_file:
+            file1, file2, ANI, mappings, total_fragments = line.split(";")
+            code1 = extract_code(file1)
+            code2 = extract_code(file2)
+            if code1 is not None and code2 is not None:
+                key_thing: tuple[str, ...] = tuple(sorted([code1, code2]))
+                fastani_data[key_thing] = (
+                    float(ANI),
+                    int(mappings),
+                    int(total_fragments),
+                )
+            else:
+                unhandled[frozenset((file1, file2))] = (
+                    float(ANI),
+                    int(mappings),
+                    int(total_fragments),
+                )
+    return fastani_data, unhandled
 
 
 def main():
@@ -98,17 +166,18 @@ def main():
     )
     print(fastani.dtypes)
     print(fastani.head())
-    spearman_tests(fastani,"ANI", "mappings", "ANI vs mappings")
-    spearman_tests(fastani,"ANI", "total_fragments", "ANI vs total_fragments")
-    #spearman_tests(fastani,"ANI", "AI", "ANI vs AI")
+    spearman_tests(fastani, "ANI", "mappings", "ANI vs mappings")
+    spearman_tests(fastani, "ANI", "total_fragments", "ANI vs total_fragments")
+    # spearman_tests(fastani,"ANI", "AI", "ANI vs AI")
 
 
-def write_2_csv(data_dict, title):
+def write_2_csv(data_dict: dict[tuple[str, ...], tuple[float, float, int]], title):
     with open(title, "x") as f:
         paperback_writer = csv.writer(f, delimiter=";")
-        for tup, froset in data_dict.items():
+        for thing in data_dict.items():
+            tup, froset = thing
             code1, code2 = tup
-            if isinstance( froset,frozenset):
+            if isinstance(froset, tuple):
                 if len(froset) == 3:
                     v1, v2, v3 = froset
                     paperback_writer.writerow((code1, code2, v1, v2, v3))
@@ -117,13 +186,12 @@ def write_2_csv(data_dict, title):
                     paperback_writer.writerow((code1, code2, v1, v2))
                     print(froset)
                 elif len(froset) == 1:
-                    v1, v2 = froset
+                    v1 = froset
                     paperback_writer.writerow((code1, code2, v1))
                     print(froset)
-            elif issubclass(float, froset):
-                v1, v2 = froset
+            elif isinstance(froset, float):
+                v1 = froset
                 paperback_writer.writerow((code1, code2, v1))
-
 
 
 def spearman_tests(data, c1: str, c2: str, title: str):
@@ -143,12 +211,42 @@ def spearman_tests(data, c1: str, c2: str, title: str):
     plt.savefig(title + ".png")
 
 
+def merger(mummer: dict, fastani: dict):
+    merge = dict()
+    for key in mummer.keys():
+        if key in fastani:
+            # hypergen_ani = hypergen[key]
+            mummer_ai = mummer[key][1]
+            fastani_ani = fastani[key][0]
+            merge[key] = (
+                mummer_ai,
+                fastani_ani,
+                mummer_ai - fastani_ani,
+                # hypergen_ani,
+                # mummer_ai - hypergen_ani,
+            )
+    return merge
+
+
+def write_results_csv(
+    data_dict: dict[tuple[str, ...], tuple[float, float, float, float, float]],
+):
+    with open("results.csv", "x") as f:
+        paperback_writer = csv.writer(f, delimiter=";")
+        for thing in data_dict.items():
+            tup, anis = thing
+            code1, code2 = tup
+            v1, v2, v3 = anis
+            paperback_writer.writerow((code1, code2, v1, v2, v3))
+
+
 def extracter():
-    #mummer_path = "/home/users/javillamar/cnsg-scripts/Streptomces_1020_Select_USAL_TABLAfullDNADIFF.csv"
-    #partial_path = "/home/users/jfar/temp/FastANIfiles_TXT/"
-    #mummer_path = "/home/portatilcnsg/Desktop/JoRepos/cnsg-scripts/error_compare/Streptomces_1020_Select_USAL_TABLAfullDNADIFF.csv"
-    #mummer, unhandled_mummer = read_mummer_data(mummer_path)
-    #write_2_csv(mummer, "mummer.csv")
+    mummer_path = "/home/jorge/22julia/cnsg-scripts/error_compare/mummer.csv"
+    # partial_path = "/home/users/jfar/temp/FastANIfiles_TXT/"
+    # mummer_path = "/home/portatilcnsg/Desktop/JoRepos/cnsg-scripts/error_compare/Streptomces_1020_Select_USAL_TABLAfullDNADIFF.csv"
+    print("reading mummer")
+    mummer, unhandled_mummer = read_mummer_extracts(mummer_path)
+
     # fastani, unhandled_fastani = read_fastani_data(partial_path)
     # write_2_csv(fastani,"fastani.csv")
 
@@ -157,10 +255,26 @@ def extracter():
     # write_2_csv(unhandled_mummer,"unhandled_mummer.csv")
     # write_2_csv(unhandled_fastani,"unhandled_fastani.csv")
     # write_2_csv(unhandled_mae,"unhandled_mae.csv")
-    hypergen_file_path="./hypergen.out"
-    hypergen_file_path="/home/portatilcnsg/Desktop/JoRepos/cnsg-scripts/error_compare/hypergen.out"
-    hypergen_data, unhandled = read_hypergen_data(hypergen_file_path)
-    #print("unhanlded:", unhandled)
-    write_2_csv(hypergen_data, "hypergen.csv")
+    # hypergen_file_path = "./hypergen.out"
+    # hypergen_file_path = (
+    #    "/home/portatilcnsg/Desktop/JoRepos/cnsg-scripts/error_compare/hypergen.out"
+    # )
+    print("reading fastani")
+    fastani_extracts_path = (
+        "/home/jorge/22julia/cnsg-scripts/error_compare/fastani_extracts.csv"
+    )
+    fastani_extracts_data, unhandled = read_fastani_extracts(fastani_extracts_path)
+    #print("reading hypergen")
+    #hypergen_file_path = "/home/jorge/22julia/cnsg-scripts/error_compare/hypergen.csv"
+    #hypergen_data, unhandled = read_hypergen_extracts(hypergen_file_path)
+    print("merging")
+    merge = merger(mummer, fastani_extracts_data)
+    print(merge)
+    print("writing results")
+    write_results_csv(merge)
+
+    # print("unhanlded:", unhandled)
+    # write_2_csv(fastani_extracts_data, "fastani_extracts.csv")
+
 
 extracter()
