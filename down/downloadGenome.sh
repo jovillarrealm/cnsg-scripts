@@ -72,10 +72,10 @@ echo "** STARTING SUMMARY DOWNLOAD **"
 download_file="$output_dir""$taxon""_""$today"".tsv"
 if [ ! -f "$download_file" ];then
     if [ -z ${api_key_file+x} ]; then
-        ./summary_downloader.sh -i "$taxon" -o "$output_dir"
+        summary_downloader.sh -i "$taxon" -o "$output_dir"
         echo "API KEY FILE NOT SET, PLEASE GET ONE FOR FASTER AND BETTER TRANSFERS"
     else
-        ./summary_downloader.sh -i "$taxon" -o "$output_dir" -a "$api_key_file"
+        summary_downloader.sh -i "$taxon" -o "$output_dir" -a "$api_key_file"
     fi
     
 else
@@ -91,9 +91,9 @@ echo
 echo "** STARTING DOWNLOADS **"
 if [ -z ${api_key_file+x} ]; then
     echo "API KEY FILE NOT SET, PLEASE GET ONE FOR FASTER AND BETTER TRANSFERS"
-    ./tsv_datasets_downloader.sh -i "$download_file" -o "$output_dir" -p "$prefix"
+    tsv_datasets_downloader.sh -i "$download_file" -o "$output_dir" -p "$prefix"
 else
-    ./tsv_datasets_downloader.sh -i "$download_file" -o "$output_dir" -a "$api_key_file" -p "$prefix"
+    tsv_datasets_downloader.sh -i "$download_file" -o "$output_dir" -a "$api_key_file" -p "$prefix"
 fi
 rm -fr "$output_dir""tmp/"
 echo
