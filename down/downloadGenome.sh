@@ -5,7 +5,7 @@ print_help() {
     echo "Usage: $0 -i <taxon> [-o <directorio_output>] [-a path/to/api/key/file] [-p prefered prefix]"
     echo ""
     echo ""
-    echo "This script assumes 'datasets' and 'dataformat' are in PATH"
+    echo "This script assumes 'datasets' 'dataformat' 'tsv_downloader.sh' 'summary_downloader.sh' and 'count-fasta-rs' are in PATH"
     echo "date format is '%d-%m-%Y'"
     echo "You should have an API key if possible"
     echo "This script uses ./summary_downloader and ./tsv_downloader.sh"
@@ -68,6 +68,7 @@ today="$(date +'%d-%m-%Y')"
 echo
 echo
 echo "** STARTING SUMMARY DOWNLOAD **"
+start_time=$(date +%s)
 # If the summary already ran before, skip it
 download_file="$output_dir""$taxon""_""$today"".tsv"
 if [ ! -f "$download_file" ];then
@@ -82,13 +83,16 @@ else
     echo "Summary for $today exists"
 fi
 echo "** DONE **"
-echo
+end_time=$(date +%s)
+elapsed_time=$((end_time - start_time))
+echo "Took $elapsed_time seconds"
 echo
 
 # This check if each file in the summary is already downloaded is if its not already not there
 echo
 echo
 echo "** STARTING DOWNLOADS **"
+start_time=$(date +%s)
 if [ -z ${api_key_file+x} ]; then
     echo "API KEY FILE NOT SET, PLEASE GET ONE FOR FASTER AND BETTER TRANSFERS"
     tsv_datasets_downloader.sh -i "$download_file" -o "$output_dir" -p "$prefix"
@@ -98,11 +102,15 @@ fi
 rm -fr "$output_dir""tmp/"
 echo
 echo "** DONE **"
+end_time=$(date +%s)
+elapsed_time=$((end_time - start_time))
+echo "Took $elapsed_time seconds"
 echo
 
 
 echo
 echo "** STARTING SEGREGATION AND SECUENCE ANALYSIS **"
+start_time=$(date +%s)
 # Make hardlinks
 genomic_dir="$output_dir""GENOMIC/"
 make_hardlinks
@@ -142,6 +150,9 @@ if [[ -d "$ref_seq_dir" ]]; then
     fi
 fi
 echo "** DONE **"
+end_time=$(date +%s)
+elapsed_time=$((end_time - start_time))
+echo "Took $elapsed_time seconds"
 echo
 echo
 

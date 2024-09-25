@@ -20,6 +20,11 @@ change() {
     '
 }
 
+if [[ $# -lt 2 ]]; then
+    print_help
+    exit 1
+fi
+
 
 input_delimiter="\t"
 output_delimiter=";"
