@@ -86,7 +86,7 @@ download_and_unzip() {
     # Download files
     if [ -f "$downloaded_path" ]; then
         # echo "Already in  $downloaded_path"
-        return
+        return 0
     else
         
         # Create directory for downloaded files
