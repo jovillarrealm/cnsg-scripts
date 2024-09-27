@@ -330,33 +330,19 @@ def write_results_csv(
 
 
 def extracter():
-    mummer_path = "/home/jorge/22julia/cnsg-scripts/error_compare/mummer.csv"
-    # partial_path = "/home/users/jfar/temp/FastANIfiles_TXT/"
-    # mummer_path = "/home/portatilcnsg/Desktop/JoRepos/cnsg-scripts/error_compare/Streptomces_1020_Select_USAL_TABLAfullDNADIFF.csv"
+    mummer_path = "error_compare/mummer.csv"
     print("reading mummer")
     
     mummer, unhandled_mummer = read_mummer_extracts(mummer_path)
 
-    # fastani, unhandled_fastani = read_fastani_data(partial_path)
-    # write_2_csv(fastani,"fastani.csv")
-
-    # mae, unhandled_mae = compare_datasets(mummer,fastani)
-
-    # write_2_csv(unhandled_mummer,"unhandled_mummer.csv")
-    # write_2_csv(unhandled_fastani,"unhandled_fastani.csv")
-    # write_2_csv(unhandled_mae,"unhandled_mae.csv")
-    # hypergen_file_path = "./hypergen.out"
-    # hypergen_file_path = (
-    #    "/home/portatilcnsg/Desktop/JoRepos/cnsg-scripts/error_compare/hypergen.out"
-    # )
     print("reading fastani")
     fastani_extracts_path = (
-        "/home/jorge/22julia/cnsg-scripts/error_compare/fastani_extracts.csv"
+        "error_compare/fastani_extracts.csv"
     )
     fastani_extracts_data, unhandled = read_fastani_extracts(fastani_extracts_path)
 
     print("reading hypergen")
-    hypergen_file_path = "/home/jorge/22julia/cnsg-scripts/error_compare/hypergen.csv"
+    hypergen_file_path = "error_compare/hypergen.csv"
     hypergen_data, unhandled = read_hypergen_data(hypergen_file_path)
     print("merging")
     print(unhandled)
@@ -364,8 +350,6 @@ def extracter():
     print("writing results")
     write_results_csv(merge)
 
-    # print("unhanlded:", unhandled)
-    # write_2_csv(fastani_extracts_data, "fastani_extracts.csv")
 
 
 main()
