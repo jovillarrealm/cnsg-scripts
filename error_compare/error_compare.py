@@ -1,4 +1,5 @@
 import os
+import glob
 import csv
 from scipy.stats import spearmanr
 import pandas as pd
@@ -161,7 +162,7 @@ def read_fastani_extracts(fastani_path):
 
 def main(hypergen_out):
     results: pd.DataFrame = pd.read_csv(
-        "error_compare/results3.csv",
+        "error_compare/results5.csv",
         names=[
             "file1",
             "file2",
@@ -174,6 +175,7 @@ def main(hypergen_out):
         ],
         sep=";",
     )
+    results = results[(results['AI_mummer'] > 90.0)]
     stat_tests(
         results, "Aligned_bases_mummer", "AI_mummer", "Aligned bases vs AI mummer"
     )
@@ -200,7 +202,7 @@ def main(hypergen_out):
     print(f"hypergen std e {results["Error_hypergen"].std()}")
 
 
-def write_2_csv(data_dict: dict[tuple[str, ...], tuple[float, float, int]], title):
+def write_2_csv(data_dict: dict, title):
     with open(title, "x") as f:
         paperback_writer = csv.writer(f, delimiter=";")
         for thing in data_dict.items():
@@ -210,14 +212,6 @@ def write_2_csv(data_dict: dict[tuple[str, ...], tuple[float, float, int]], titl
                 if len(froset) == 3:
                     v1, v2, v3 = froset
                     paperback_writer.writerow((code1, code2, v1, v2, v3))
-                elif len(froset) == 2:
-                    v1, v2 = froset
-                    paperback_writer.writerow((code1, code2, v1, v2))
-                    print(froset)
-                elif len(froset) == 1:
-                    v1 = froset
-                    paperback_writer.writerow((code1, code2, v1))
-                    print(froset)
             elif isinstance(froset, float):
                 v1 = froset
                 paperback_writer.writerow((code1, code2, v1))
@@ -297,7 +291,7 @@ def merger(mummer: dict, fastani: dict, hypergen: dict):
 def write_results_csv(
     data_dict: dict[tuple[str, ...], tuple[float, float, float, float, float, float]],
 ):
-    with open("error_compare/results5.csv", "x") as f:
+    with open("error_compare/results5.csv", "w") as f:
         paperback_writer = csv.writer(f, delimiter=";")
         for thing in data_dict.items():
             tup, anis = thing
@@ -313,7 +307,9 @@ def extracter(hypergen_out):
     if os.path.exists(mummer_path):
         mummer, unhandled_mummer = read_mummer_extracts(mummer_path)
     else:
-        mummer_ogfile="error_compare/Streptomces_1020_Select_USAL_TABLAfullDNADIFF.csv"
+        mummer_ogfile = (
+            "error_compare/Streptomces_1020_Select_USAL_TABLAfullDNADIFF.csv"
+        )
         mummer, unhandled_mummer = read_mummer_data(mummer_ogfile)
         write_2_csv(mummer, mummer_path)
 
@@ -323,14 +319,26 @@ def extracter(hypergen_out):
         fastani_extracts_data, unhandled = read_fastani_extracts(fastani_extracts_path)
     else:
         fastani_og_path = "/home/users/javillamar/data/fastanixummer/TEST2Streptomyces"
-        
+        fastani_extracts_data, unhandled = read_fastani_data(fastani_og_path)
+        write_2_csv(fastani_extracts_data, fastani_extracts_path)
 
     print("reading hypergen")
-    hypergen_file_path = "error_compare/hypergen.csv"
-    hypergen_data, unhandled = read_hypergen_data(hypergen_file_path)
+    hypergen_file_path = f"error_compare/{hypergen_out}.csv"
+    if os.path.exists(hypergen_file_path):
+        hypergen_data, unhandled = read_hypergen_extracts(hypergen_file_path)
+    else:
+        hypergen_og_path = f"error_compare/{hypergen_out}"
+        hypergen_data, unhandled = read_hypergen_data(hypergen_og_path)
+        write_2_csv(hypergen_data, hypergen_file_path)
+
     print("merging")
     print(unhandled)
     merge = merger(mummer, fastani_extracts_data, hypergen_data)
     print("writing results")
     write_results_csv(merge)
     main(hypergen_out)
+
+
+for hyper_out in glob.glob("*out", root_dir="error_compare/"):
+    print(hyper_out)
+    extracter(hyper_out)
