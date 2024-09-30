@@ -300,7 +300,7 @@ def write_results_csv(
             paperback_writer.writerow((code1, code2, v1, v2, v3, v4, v5, v6))
 
 
-def extracter(hypergen_out):
+def extracter():
     print("reading mummer")
 
     mummer_path = "error_compare/mummer.csv"
@@ -323,22 +323,22 @@ def extracter(hypergen_out):
         write_2_csv(fastani_extracts_data, fastani_extracts_path)
 
     print("reading hypergen")
-    hypergen_file_path = f"error_compare/{hypergen_out}.csv"
-    if os.path.exists(hypergen_file_path):
-        hypergen_data, unhandled = read_hypergen_extracts(hypergen_file_path)
-    else:
-        hypergen_og_path = f"error_compare/{hypergen_out}"
-        hypergen_data, unhandled = read_hypergen_data(hypergen_og_path)
-        write_2_csv(hypergen_data, hypergen_file_path)
+    for hypergen_out in glob.glob("*out", root_dir="error_compare/"):
+        print(hypergen_out)
+        hypergen_file_path = f"error_compare/{hypergen_out}.csv"
+        if os.path.exists(hypergen_file_path):
+            hypergen_data, unhandled = read_hypergen_extracts(hypergen_file_path)
+        else:
+            hypergen_og_path = f"error_compare/{hypergen_out}"
+            hypergen_data, unhandled = read_hypergen_data(hypergen_og_path)
+            write_2_csv(hypergen_data, hypergen_file_path)
 
-    print("merging")
-    print(unhandled)
-    merge = merger(mummer, fastani_extracts_data, hypergen_data)
-    print("writing results")
-    write_results_csv(merge)
-    main(hypergen_out)
+        print("merging")
+        print(unhandled)
+        merge = merger(mummer, fastani_extracts_data, hypergen_data)
+        print("writing results")
+        write_results_csv(merge)
+        main(hypergen_out)
 
+extracter()
 
-for hyper_out in glob.glob("*out", root_dir="error_compare/"):
-    print(hyper_out)
-    extracter(hyper_out)
